@@ -247,7 +247,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     _navigateToSignUp();
                   },
                   child: const Text(
-                    'Signup',
+                    'contact for signup',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,

@@ -8,9 +8,8 @@ abstract interface class ILocalAuthDatasource {
   Future<AuthHiveModel?> getUserByEmail(String email);
 }
 
-
 abstract interface class IRemoteAuthDatasource {
-  Future<AuthApiModel?> register(AuthApiModel model);
+  Future<bool> sendRequest(AuthApiModel model);
   Future<AuthApiModel?> login(String email, String password);
   Future<bool> logout();
   Future<AuthApiModel?> getUserByEmail(String email);

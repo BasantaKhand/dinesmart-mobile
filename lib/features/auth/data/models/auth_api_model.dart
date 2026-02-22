@@ -1,77 +1,82 @@
-
-
 import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
 
 class AuthApiModel {
   final String? authId;
-  final String fullName;
+  final String restaurantName;
+  final String ownerName;
   final String email;
-  final String username;
+  final String phoneNumber;
+  final String address;
+  final String message;
+  final String? username;
   final String? password;
-  final String? phoneNumber;
   final String? profilePicture;
 
-  AuthApiModel({
+  const AuthApiModel({
     this.authId,
-    required this.fullName,
+    required this.restaurantName,
+    required this.ownerName,
     required this.email,
-    required this.username,
+    required this.phoneNumber,
+    required this.address,
+    required this.message,
+    this.username,
     this.password,
-    this.phoneNumber,
-    this.profilePicture
+    this.profilePicture,
   });
 
-  Map<String, dynamic> toJson(){
-    return {  
-      "name": fullName,
-      "email": email,
-      "username": username,
-      "password": password,
-      "phoneNumber": phoneNumber,
-      "profilePicture": profilePicture
+  Map<String, dynamic> toJson() {
+    return {
+      'restaurantName': restaurantName,
+      'ownerName': ownerName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'address': address,
+      'message': message,
     };
   }
 
-  factory AuthApiModel.fromJson(Map<String,dynamic> json){
-    return AuthApiModel(  
-      authId: json['_id'] as String,
-      fullName: json['name'] as String,
-      email: json['email'] as String,
-      username: json['username'] as String,
-      phoneNumber: json['phoneNumber'] as String?,
-      profilePicture: json['profilePicture'] as String?
+  factory AuthApiModel.fromJson(Map<String, dynamic> json) {
+    return AuthApiModel(
+      authId: (json['_id'] ?? json['id'])?.toString(),
+      restaurantName: (json['restaurantName'] ?? '').toString(),
+      ownerName: (json['ownerName'] ?? json['name'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      phoneNumber: (json['phoneNumber'] ?? '').toString(),
+      address: (json['address'] ?? '').toString(),
+      message: (json['message'] ?? '').toString(),
+      username: json['username']?.toString(),
+      profilePicture: json['profilePicture']?.toString(),
     );
   }
 
-  AuthEntity toEntity(){
-    return AuthEntity(  
+  AuthEntity toEntity() {
+    return AuthEntity(
       authId: authId,
-      fullName: fullName,
+      restaurantName: restaurantName,
+      ownerName: ownerName,
       email: email,
-      username: username,
       phoneNumber: phoneNumber,
-      profilePicture: profilePicture
+      address: address,
+      message: message,
+      username: username,
+      password: password,
+      profilePicture: profilePicture,
     );
   }
 
   factory AuthApiModel.fromEntity(AuthEntity entity) {
-    return AuthApiModel(  
+    return AuthApiModel(
       authId: entity.authId,
-      fullName: entity.fullName,
+      restaurantName: entity.restaurantName,
+      ownerName: entity.ownerName,
       email: entity.email,
+      phoneNumber: entity.phoneNumber,
+      address: entity.address,
+      message: entity.message,
       username: entity.username,
       password: entity.password,
-      phoneNumber: entity.phoneNumber,
-      profilePicture: entity.profilePicture
-      
+      profilePicture: entity.profilePicture,
     );
   }
-
-
-  List<AuthEntity> toEntityList(List<AuthApiModel> models) {
-    return models.map((model)=>model.toEntity()).toList();
-  }
-
-
-
 }

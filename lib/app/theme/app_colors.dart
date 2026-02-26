@@ -24,8 +24,11 @@ class AppColors {
   static const Color opacityTextOne = Color(0x996B7280);
   static const Color opacityTextTwo = Color(0x806B7280);
 
-  static const Color onboarding1Primary =Color(0xFFFF7A18) ;
+
+   static const Color onboarding1Primary =Color(0xFFFF7A18) ;
   static const Color onboarding1Secondary = Color(0xFFFA4A0C);
+
+  
 
   static const Color onboarding3Primary =Color(0xFFFF5F1F);
   static const Color onboarding3Secondary = Color(0xFFE63E00);

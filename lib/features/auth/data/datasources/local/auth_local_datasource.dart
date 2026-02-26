@@ -32,6 +32,7 @@ class AuthLocalDatasource implements ILocalAuthDatasource {
           email: user.email,
           fullName: user.fullName,
           username: user.username,
+          role: 'WAITER', // Default role for local db users
           phoneNumber: user.phoneNumber,
           profilePicture: user.profilePicture,
         );

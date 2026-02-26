@@ -1,15 +1,7 @@
 import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
 import 'package:equatable/equatable.dart';
 
-
-enum AuthStatus {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-  registered,
-  error,
-}
+enum AuthStatus { initial, loading, registered, authenticated, error, passwordChangeRequired }
 
 class AuthState extends Equatable {
   final AuthStatus status;
@@ -19,7 +11,6 @@ class AuthState extends Equatable {
   const AuthState({
     this.status = AuthStatus.initial,
     this.user,
-    
     this.errorMessage,
   });
 
@@ -31,7 +22,7 @@ class AuthState extends Equatable {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage,
     );
   }
 

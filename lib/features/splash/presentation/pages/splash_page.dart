@@ -3,6 +3,9 @@ import 'package:dinesmart_app/app/routes/app_routes.dart';
 import 'package:dinesmart_app/app/theme/app_colors.dart';
 import 'package:dinesmart_app/core/services/storage/user_session_service.dart';
 import 'package:dinesmart_app/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:dinesmart_app/features/waiter_dashboard/presentation/pages/waiter_dashboard_page.dart';
+import 'package:dinesmart_app/features/cashier_dashboard/presentation/pages/cashier_dashboard_page.dart';
+import 'package:dinesmart_app/features/admin_dashboard/presentation/pages/admin_dashboard_page.dart';
 import 'package:dinesmart_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,8 +53,17 @@ class _SplashPageState extends ConsumerState<SplashPage>
     final isLoggedIn = userSessionService.isLoggedIn();
 
     if (isLoggedIn) {
-      // Navigate to Dashboard if user is logged in
-      AppRoutes.pushReplacement(context, const DashboardPage());
+      // Navigate based on role if user is logged in
+      final role = userSessionService.getCurrentUserRole();
+      if (role == 'WAITER') {
+        AppRoutes.pushReplacement(context, const WaiterDashboardPage());
+      } else if (role == 'CASHIER') {
+        AppRoutes.pushReplacement(context, const CashierDashboardPage());
+      } else if (role == 'RESTAURANT_ADMIN') {
+        AppRoutes.pushReplacement(context, const AdminDashboardPage());
+      } else {
+        AppRoutes.pushReplacement(context, const DashboardPage());
+      }
     } else {
       // Navigate to Onboarding if user is not logged in
       AppRoutes.pushReplacement(context, const OnboardingPage());

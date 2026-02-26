@@ -1,16 +1,17 @@
 import 'package:dinesmart_app/core/api/api_endpoints.dart';
+import 'package:dinesmart_app/core/services/storage/user_session_service.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 
 
 // Provider for ApiClient
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
+  final userSessionService = ref.read(userSessionServiceProvider);
+  return ApiClient(userSessionService);
 });
 
 
@@ -18,8 +19,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
 class ApiClient {
   late final Dio _dio;
+  final UserSessionService _userSessionService;
 
-  ApiClient() {
+  ApiClient(this._userSessionService) {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
@@ -33,7 +35,7 @@ class ApiClient {
     );
 
     // Add interceptors
-    _dio.interceptors.add(_AuthInterceptor());
+    _dio.interceptors.add(_AuthInterceptor(_userSessionService));
 
     // Auto retry on network failures
     _dio.interceptors.add(
@@ -126,6 +128,21 @@ class ApiClient {
     );
   }
 
+  // PATCH request
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return _dio.patch(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
   // Multipart request for file uploads
   Future<Response> uploadFile(
     String path, {
@@ -144,8 +161,9 @@ class ApiClient {
 
 // Auth Interceptor to add JWT token to requests
 class _AuthInterceptor extends Interceptor {
-  final _storage = const FlutterSecureStorage();
-  static const String _tokenKey = 'auth_token';
+  final UserSessionService _userSessionService;
+
+  _AuthInterceptor(this._userSessionService);
 
   @override
   void onRequest(
@@ -154,7 +172,7 @@ class _AuthInterceptor extends Interceptor {
   ) async {
     // Skip auth for public endpoints
     final publicEndpoints = [
-      ApiEndpoints.userLogin,
+      ApiEndpoints.login,
     ];
 
     final isPublicGet =
@@ -162,26 +180,44 @@ class _AuthInterceptor extends Interceptor {
         publicEndpoints.any((endpoint) => options.path.startsWith(endpoint));
 
     final isAuthEndpoint =
-        options.path == ApiEndpoints.userLogin ||
+        options.path == ApiEndpoints.login ||
         options.path == ApiEndpoints.users;
 
     if (!isPublicGet && !isAuthEndpoint) {
-      final token = await _storage.read(key: _tokenKey);
+      final token = await _userSessionService.getToken();
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
       }
     }
 
+    debugPrint('DEBUG: API REQUEST: ${options.method} ${options.baseUrl}${options.path}');
+    debugPrint('DEBUG: HEADERS: ${options.headers}');
+
     handler.next(options);
   }
 
   @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    debugPrint('DEBUG: API RESPONSE: ${response.statusCode} from ${response.requestOptions.path}');
+    if (response.data != null && response.data is Map && response.data.containsKey('data')) {
+      final data = response.data['data'];
+      if (data is List) {
+        debugPrint('DEBUG: API DATA COUNT: ${data.length} items');
+      }
+    }
+    handler.next(response);
+  }
+
+  @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    debugPrint('DEBUG: API ERROR: ${err.response?.statusCode} at ${err.requestOptions.path}');
+    debugPrint('DEBUG: ERROR MSG: ${err.message}');
     // Handle 401 Unauthorized - token expired
     if (err.response?.statusCode == 401) {
-      // Clear token and redirect to login
-      _storage.delete(key: _tokenKey);
-      // You can add navigation logic here or use a callback
+      // Clear entire session
+      _userSessionService.clearSession();
+      // Note: Navigation to login usually happens via a navigation observer 
+      // or by checking session state in the app's root
     }
     handler.next(err);
   }

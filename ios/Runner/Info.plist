@@ -45,15 +45,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-
-	//to add permissions
-	<key>NSCameraUsageDescription</key>
-	<string>This app requires camera access to take photos.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app requires microphone access to record audio.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app requires photo library access to select photos.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app requires photo library access to save photos.</string>
 </dict>
 </plist>

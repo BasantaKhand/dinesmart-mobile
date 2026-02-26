@@ -1,8 +1,7 @@
 import 'package:dinesmart_app/app/routes/app_routes.dart';
 import 'package:dinesmart_app/app/theme/app_colors.dart';
 import 'package:dinesmart_app/core/utils/snackbar_utils.dart';
-import 'package:dinesmart_app/features/auth/presentation/state/auth_state.dart';
-import 'package:dinesmart_app/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:dinesmart_app/features/auth/presentation/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,198 +15,196 @@ class SignupPage extends ConsumerStatefulWidget {
 class _SignupPageState extends ConsumerState<SignupPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController = TextEditingController();
+  final _restaurantNameController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _messageController = TextEditingController();
 
-  @override
-  void initState(){
-    super.initState();
+  bool _isSubmitting = false;
 
-  }
-
-  void _navigateToLogin(){
-    AppRoutes.pop(context);
-  }
-
-  Future<void> _handleSignup() async {
-    if (_formKey.currentState!.validate()) {
-      await ref
-          .read(authViewModelProvider.notifier)
-          .register(
-            fullName: _nameController.text.trim(),
-            email: _emailController.text.trim(),
-            username: _emailController.text.trim().split('@').first,
-            password: _passwordController.text,
-          );
+  String? _requiredValidator(String? value, String label) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter $label';
     }
+    return null;
   }
 
+  String? _emailValidator(String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return 'Please enter email';
+    final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
+    if (!emailRegex.hasMatch(v)) return 'Please enter a valid email';
+    return null;
+  }
 
+  String? _phoneValidator(String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return 'Please enter phone number';
+    if (v.length < 10) return 'Please enter a valid phone number';
+    return null;
+  }
 
+  Future<void> _submitRequest() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    SnackbarUtils.showSuccess(
+      context,
+      'Request sent! We will contact you soon.',
+    );
+
+    AppRoutes.pushReplacement(context, const LoginPage());
+  }
+
+  void _backToLogin() {
+    AppRoutes.pushReplacement(context, const LoginPage());
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _restaurantNameController.dispose();
+    _ownerNameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _addressController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authViewModelProvider);
-
-    // Listen to auth state changes
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.registered) {
-        SnackbarUtils.showSuccess(
-          context,
-          'Registration successful! Please login.',
-        );
-        Navigator.of(context).pop();
-      } else if (next.status == AuthStatus.error && next.errorMessage != null) {
-        SnackbarUtils.showError(context, next.errorMessage!);
-      }
-    });
-
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 🔹 TOP CARD (same as login)
-            Container(
-              margin: const EdgeInsets.all(2),
-              width: double.infinity,
-              height: 400,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(width: 2, color: Colors.white),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(width: 2, color: Colors.white),
+                ),
                 child: Column(
                   children: [
                     Image.asset(
                       'assets/images/login_for.png',
-                      height: 350,
-                      width: 350,
-                      fit: BoxFit.fill,
+                      height: 220,
+                      width: 220,
+                      fit: BoxFit.contain,
                     ),
+                    const SizedBox(height: 8),
                     const Text(
-                      'signup',
+                      'Request Access',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Divider(
-                          height: 3,
-                          color: AppColors.primary,
-                          indent: 120,
-                          endIndent: 120,
-                        ),
+                    const SizedBox(height: 6),
+                    Divider(
+                      height: 3,
+                      color: AppColors.primary,
+                      indent: 120,
+                      endIndent: 120,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Fill details below. We will create an Owner account and share login credentials.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.black54,
+                        height: 1.25,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
 
-            const SizedBox(height:25),
+              const SizedBox(height: 10),
 
-            // 🔹 FORM
-            Form(
-              key: _formKey,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              Form(
+                key: _formKey,
                 child: Column(
                   children: [
-                    // Full name
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: _inputDecoration(
-                        label: 'Full name',
-                        hint: 'please enter your name',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'please enter your name';
-                        }
-                        return null;
-                      },
+                    _CompactField(
+                      controller: _restaurantNameController,
+                      label: 'Restaurant name',
+                      hint: 'e.g. DineSmart Cafe',
+                      validator: (v) => _requiredValidator(v, 'restaurant name'),
+                      textInputAction: TextInputAction.next,
                     ),
-
-                    const SizedBox(height: 10),
-
-                    // Email
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: _inputDecoration(
-                        label: 'Email address',
-                        hint: 'please enter your email',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'please enter valid email';
-                        }
-                        return null;
-                      },
+                    const SizedBox(height: 8),
+                    _CompactField(
+                      controller: _ownerNameController,
+                      label: 'Owner full name',
+                      hint: 'e.g. Basanta Khand',
+                      validator: (v) => _requiredValidator(v, 'owner name'),
+                      textInputAction: TextInputAction.next,
                     ),
-
-                    const SizedBox(height: 10),
-
-                    // Password
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: _inputDecoration(
-                        label: 'Password',
-                        hint: 'please enter your password',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return 'password must be at least 6 characters';
-                        }
-                        return null;
-                      },
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _CompactField(
+                            controller: _phoneController,
+                            label: 'Phone',
+                            hint: '98XXXXXXXX',
+                            keyboardType: TextInputType.phone,
+                            validator: _phoneValidator,
+                            textInputAction: TextInputAction.next,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _CompactField(
+                            controller: _emailController,
+                            label: 'Email',
+                            hint: 'owner@email.com',
+                            keyboardType: TextInputType.emailAddress,
+                            validator: _emailValidator,
+                            textInputAction: TextInputAction.next,
+                          ),
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 10),
-
-                    // Confirm password
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: true,
-                      decoration: _inputDecoration(
-                        label: 'Confirm password',
-                        hint: 're-enter your password',
-                      ),
-                      validator: (value) {
-                        if (value != _passwordController.text) {
-                          return 'password does not match';
-                        }
-                        return null;
-                      },
+                    const SizedBox(height: 8),
+                    _CompactField(
+                      controller: _addressController,
+                      label: 'Restaurant address',
+                      hint: 'e.g. Kathmandu, New Road',
+                      validator: (v) => _requiredValidator(v, 'address'),
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 8),
+                    _CompactField(
+                      controller: _messageController,
+                      label: 'Message (optional)',
+                      hint: 'Branches, staff count, anything...',
+                      maxLines: 2,
+                      validator: (_) => null,
+                      textInputAction: TextInputAction.done,
                     ),
 
                     const SizedBox(height: 20),
 
-                    // Signup button
                     SizedBox(
                       width: double.infinity,
+                      height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          _handleSignup();
-                        },
+                        onPressed: _isSubmitting ? null : _submitRequest,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white70,
@@ -215,63 +212,96 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             borderRadius: BorderRadius.circular(25),
                           ),
                         ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.6,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Send Request',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: _backToLogin,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.black26, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
                         child: const Text(
-                          'Signup',
-                          style: TextStyle(fontSize: 20),
+                          'Back to Login',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-
-            // 🔹 FOOTER
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Already have an account?",
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 14,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    _navigateToLogin();
-                  },
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  // 🔹 Reusable underline decoration (same as login)
-  InputDecoration _inputDecoration({
-    required String label,
-    required String hint,
-  }) {
-    return InputDecoration(
-      fillColor: AppColors.backgroundPrimary,
-      labelText: label,
-      hintText: hint,
-      enabledBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.black26, width: 2),
+class _CompactField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final int maxLines;
+
+  const _CompactField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.validator,
+    this.keyboardType,
+    this.textInputAction,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      decoration: InputDecoration(
+        fillColor: AppColors.backgroundPrimary,
+        labelText: label,
+        hintText: hint,
+        isDense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+        enabledBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.black26, width: 2),
+        ),
+        errorBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.black26, width: 2),
+        ),
       ),
-      errorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.black26, width: 2),
-      ),
+      validator: validator,
     );
   }
 }

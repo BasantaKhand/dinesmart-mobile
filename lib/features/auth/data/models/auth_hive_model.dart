@@ -1,4 +1,3 @@
-
 import 'package:dinesmart_app/core/constants/hive_box_constants.dart';
 import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
 import 'package:hive/hive.dart';
@@ -43,32 +42,32 @@ class AuthHiveModel extends HiveObject {
     this.profilePicture,
   }) : authId = authId ?? const Uuid().v4();
 
-  // To Entity
   AuthEntity toEntity() {
     return AuthEntity(
       authId: authId,
-      fullName: fullName,
+      restaurantName: '',
+      ownerName: fullName,
       email: email,
-      phoneNumber: phoneNumber,
+      phoneNumber: phoneNumber ?? '',
+      address: '',
+      message: '',
       username: username,
       profilePicture: profilePicture,
     );
   }
 
-  // From Entity
   factory AuthHiveModel.fromEntity(AuthEntity entity) {
     return AuthHiveModel(
       authId: entity.authId,
-      fullName: entity.fullName,
+      fullName: entity.ownerName,
       email: entity.email,
       phoneNumber: entity.phoneNumber,
-      username: entity.username,
+      username: entity.username ?? entity.email,
       password: entity.password,
       profilePicture: entity.profilePicture,
     );
   }
 
-  // To Entity List
   static List<AuthEntity> toEntityList(List<AuthHiveModel> models) {
     return models.map((model) => model.toEntity()).toList();
   }

@@ -1,77 +1,104 @@
-
-
 import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
 
 class AuthApiModel {
   final String? authId;
-  final String fullName;
+  final String restaurantName;
+  final String ownerName;
   final String email;
-  final String username;
+  final String phoneNumber;
+  final String address;
+  final String message;
+  final String? username;
   final String? password;
-  final String? phoneNumber;
+  final String? role;
+  final String? restaurantId;
   final String? profilePicture;
+  final String? token;
+  final bool mustChangePassword;
 
-  AuthApiModel({
+  const AuthApiModel({
     this.authId,
-    required this.fullName,
+    required this.restaurantName,
+    required this.ownerName,
     required this.email,
-    required this.username,
+    required this.phoneNumber,
+    required this.address,
+    required this.message,
+    this.username,
     this.password,
-    this.phoneNumber,
-    this.profilePicture
+    this.role,
+    this.restaurantId,
+    this.profilePicture,
+    this.token,
+    this.mustChangePassword = false,
   });
 
-  Map<String, dynamic> toJson(){
-    return {  
-      "name": fullName,
-      "email": email,
-      "username": username,
-      "password": password,
-      "phoneNumber": phoneNumber,
-      "profilePicture": profilePicture
+  Map<String, dynamic> toJson() {
+    return {
+      'restaurantName': restaurantName,
+      'ownerName': ownerName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'address': address,
+      'message': message,
+      'role': role,
+      'restaurantId': restaurantId,
     };
   }
 
-  factory AuthApiModel.fromJson(Map<String,dynamic> json){
-    return AuthApiModel(  
-      authId: json['_id'] as String,
-      fullName: json['name'] as String,
-      email: json['email'] as String,
-      username: json['username'] as String,
-      phoneNumber: json['phoneNumber'] as String?,
-      profilePicture: json['profilePicture'] as String?
+  factory AuthApiModel.fromJson(Map<String, dynamic> json) {
+    return AuthApiModel(
+      authId: (json['_id'] ?? json['id'])?.toString(),
+      restaurantName: (json['restaurantName'] ?? '').toString(),
+      ownerName: (json['ownerName'] ?? json['name'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      phoneNumber: (json['phoneNumber'] ?? json['phone'] ?? '').toString(),
+      address: (json['address'] ?? '').toString(),
+      message: (json['message'] ?? '').toString(),
+      username: json['username']?.toString(),
+      role: json['role']?.toString(),
+      restaurantId: json['restaurantId']?.toString(),
+      profilePicture: json['profilePicture']?.toString(),
+      token: json['token']?.toString(),
+      mustChangePassword: json['mustChangePassword'] == true || json['mustChangePassword'] == 'true',
     );
   }
 
-  AuthEntity toEntity(){
-    return AuthEntity(  
+  AuthEntity toEntity() {
+    return AuthEntity(
       authId: authId,
-      fullName: fullName,
+      restaurantName: restaurantName,
+      ownerName: ownerName,
       email: email,
-      username: username,
       phoneNumber: phoneNumber,
-      profilePicture: profilePicture
+      address: address,
+      message: message,
+      username: username,
+      password: password,
+      role: role,
+      restaurantId: restaurantId,
+      profilePicture: profilePicture,
+      token: token,
+      mustChangePassword: mustChangePassword,
     );
   }
 
   factory AuthApiModel.fromEntity(AuthEntity entity) {
-    return AuthApiModel(  
+    return AuthApiModel(
       authId: entity.authId,
-      fullName: entity.fullName,
+      restaurantName: entity.restaurantName,
+      ownerName: entity.ownerName,
       email: entity.email,
+      phoneNumber: entity.phoneNumber,
+      address: entity.address,
+      message: entity.message,
       username: entity.username,
       password: entity.password,
-      phoneNumber: entity.phoneNumber,
-      profilePicture: entity.profilePicture
-      
+      role: entity.role,
+      restaurantId: entity.restaurantId,
+      profilePicture: entity.profilePicture,
+      token: entity.token,
+      mustChangePassword: entity.mustChangePassword,
     );
   }
-
-
-  List<AuthEntity> toEntityList(List<AuthApiModel> models) {
-    return models.map((model)=>model.toEntity()).toList();
-  }
-
-
-
 }

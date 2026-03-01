@@ -115,7 +115,7 @@ class AdminTablesPage extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: Colors.grey[200]!, width: 1.2),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
@@ -166,7 +166,7 @@ class AdminTablesPage extends ConsumerWidget {
   }
 
   Widget _buildTableCard(BuildContext context, TableEntity table, WidgetRef ref, bool isMobile) {
-    final isOccupied = table.status == TableStatus.OCCUPIED;
+    final isOccupied = table.status == TableStatus.occupied;
     final statusColor = isOccupied ? Colors.orange : Colors.green;
 
     return Container(
@@ -175,21 +175,14 @@ class AdminTablesPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[100]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!, width: 1.2),
       ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.all(isMobile ? 10 : 12),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(Icons.table_restaurant_rounded, color: statusColor, size: isMobile ? 24 : 28),
@@ -238,14 +231,14 @@ class AdminTablesPage extends ConsumerWidget {
   }
 
   Widget _buildStatusBadge(TableStatus status) {
-    final isOccupied = status == TableStatus.OCCUPIED;
-    final isReserved = status == TableStatus.RESERVED;
+    final isOccupied = status == TableStatus.occupied;
+    final isReserved = status == TableStatus.reserved;
     final color = isOccupied ? Colors.orange : (isReserved ? Colors.blue : Colors.green);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -262,7 +255,7 @@ class AdminTablesPage extends ConsumerWidget {
       child: Container(
         padding: EdgeInsets.all(isMobile ? 6 : 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, size: isMobile ? 16 : 18, color: color),
@@ -273,7 +266,7 @@ class AdminTablesPage extends ConsumerWidget {
   void _showTableDialog(BuildContext context, WidgetRef ref, {TableEntity? table}) {
     final numberController = TextEditingController(text: table?.number);
     final capacityController = TextEditingController(text: table?.capacity.toString());
-    TableStatus selectedStatus = table?.status ?? TableStatus.AVAILABLE;
+    TableStatus selectedStatus = table?.status ?? TableStatus.available;
 
     showDialog(
       context: context,
@@ -334,7 +327,7 @@ class AdminTablesPage extends ConsumerWidget {
 
   Widget _buildStatusDropdown(TableStatus selectedStatus, ValueChanged<TableStatus?> onChanged) {
     return DropdownButtonFormField<TableStatus>(
-      value: selectedStatus,
+      initialValue: selectedStatus,
       decoration: InputDecoration(
         labelText: 'Initial Status',
         prefixIcon: const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),

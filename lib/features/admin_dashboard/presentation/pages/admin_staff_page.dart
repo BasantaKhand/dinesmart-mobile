@@ -167,7 +167,7 @@ class AdminStaffPage extends ConsumerWidget {
   }
 
   Widget _buildStaffCard(BuildContext context, StaffEntity staff, WidgetRef ref, bool isMobile) {
-    final isActive = staff.status == StaffStatus.ACTIVE;
+    final isActive = staff.status == StaffStatus.active;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -175,14 +175,7 @@ class AdminStaffPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[100]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!, width: 1.2),
       ),
       child: Column(
         children: [
@@ -190,7 +183,7 @@ class AdminStaffPage extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: isMobile ? 24 : 28,
-                backgroundColor: Colors.orange.withOpacity(0.1),
+                backgroundColor: Colors.orange.withValues(alpha: 0.1),
                 child: Text(
                   staff.name[0].toUpperCase(),
                   style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w900, fontSize: isMobile ? 16 : 18),
@@ -264,7 +257,7 @@ class AdminStaffPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+        color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -286,7 +279,7 @@ class AdminStaffPage extends ConsumerWidget {
       child: Container(
         padding: EdgeInsets.all(isMobile ? 6 : 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, size: isMobile ? 16 : 18, color: color),
@@ -347,8 +340,8 @@ class _AddEditStaffSheetState extends ConsumerState<AddEditStaffSheet> {
     _nameController = TextEditingController(text: widget.staff?.name ?? '');
     _emailController = TextEditingController(text: widget.staff?.email ?? '');
     _phoneController = TextEditingController(text: widget.staff?.phone ?? '');
-    _selectedRole = widget.staff?.role ?? StaffRole.WAITER;
-    _selectedStatus = widget.staff?.status ?? StaffStatus.ACTIVE;
+    _selectedRole = widget.staff?.role ?? StaffRole.waiter;
+    _selectedStatus = widget.staff?.status ?? StaffStatus.active;
   }
 
   @override
@@ -390,14 +383,14 @@ class _AddEditStaffSheetState extends ConsumerState<AddEditStaffSheet> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<StaffRole>(
-                value: _selectedRole,
+                initialValue: _selectedRole,
                 decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
                 items: StaffRole.values.map((r) => DropdownMenuItem(value: r, child: Text(r.name))).toList(),
                 onChanged: (val) => setState(() => _selectedRole = val!),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<StaffStatus>(
-                value: _selectedStatus,
+                initialValue: _selectedStatus,
                 decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
                 items: StaffStatus.values.map((s) => DropdownMenuItem(value: s, child: Text(s.name))).toList(),
                 onChanged: (val) => setState(() => _selectedStatus = val!),

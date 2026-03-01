@@ -11,83 +11,44 @@ class AdminCategoriesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(waiterDashboardViewModelProvider);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth;
-        final isMobile = availableWidth < 600;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFFF7D29),
+        onPressed: () => _showCategoryBottomSheet(context, ref),
+        child: const Icon(Icons.add_rounded, color: Colors.white),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final availableWidth = constraints.maxWidth;
+          final isMobile = availableWidth < 600;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, ref, availableWidth),
-            const SizedBox(height: 24),
-            _buildSearchAndFilter(isMobile),
-            const SizedBox(height: 24),
-            Expanded(
-              child: _buildCategoryList(context, state, ref, isMobile),
-            ),
-          ],
-        );
-      },
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context, ref, availableWidth),
+              const SizedBox(height: 24),
+              _buildSearchAndFilter(isMobile),
+              const SizedBox(height: 24),
+              Expanded(
+                child: _buildCategoryList(context, state, ref, isMobile),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  void _showCategoryDialog(BuildContext context, WidgetRef ref, {CategoryEntity? category}) {
-    final nameController = TextEditingController(text: category?.name);
-    final descriptionController = TextEditingController(text: category?.description);
-    final imageController = TextEditingController(text: category?.image);
-
-    showDialog(
+  void _showCategoryBottomSheet(BuildContext context, WidgetRef ref, {CategoryEntity? category}) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(category == null ? 'Add Category' : 'Edit Category'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. Italian'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description', hintText: 'e.g. Pasta and Pizzas'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: imageController,
-                decoration: const InputDecoration(labelText: 'Image URL', hintText: 'https://example.com/image.jpg'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isEmpty) return;
-              
-              final newCategory = CategoryEntity(
-                id: category?.id ?? '',
-                name: nameController.text,
-                description: descriptionController.text,
-                image: imageController.text,
-              );
-
-              final viewModel = ref.read(waiterDashboardViewModelProvider.notifier);
-              if (category == null) {
-                viewModel.createCategory(newCategory);
-              } else {
-                viewModel.updateCategory(category.id, newCategory);
-              }
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text(category == null ? 'Create' : 'Save', style: const TextStyle(color: Colors.white)),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
+      builder: (ctx) => AddEditCategorySheet(category: category),
     );
   }
 
@@ -115,23 +76,7 @@ class AdminCategoriesPage extends ConsumerWidget {
     final isMobile = availableWidth < 600;
     return Padding(
       padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, isMobile ? 24 : 32, isMobile ? 16 : 24, 8),
-      child: isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeaderContent(context, isMobile),
-                const SizedBox(height: 16),
-                _buildAddButton(context, ref, isMobile),
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildHeaderContent(context, isMobile)),
-                const SizedBox(width: 16),
-                _buildAddButton(context, ref, isMobile),
-              ],
-            ),
+      child: _buildHeaderContent(context, isMobile),
     );
   }
 
@@ -161,37 +106,6 @@ class AdminCategoriesPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAddButton(BuildContext context, WidgetRef ref, bool isMobile) {
-    return Material(
-      color: Colors.orange,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 0,
-      child: InkWell(
-        onTap: () => _showCategoryDialog(context, ref),
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 18, vertical: isMobile ? 10 : 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-              if (!isMobile) ...[
-                const SizedBox(width: 8),
-                const Text(
-                  'Add Category',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSearchAndFilter(bool isMobile) {
     return Padding(
@@ -418,7 +332,7 @@ class AdminCategoriesPage extends ConsumerWidget {
     return Column(
       children: [
         _buildIconButton(
-          onPressed: () => _showCategoryDialog(context, ref, category: category),
+          onPressed: () => _showCategoryBottomSheet(context, ref, category: category),
           icon: Icons.edit_note_rounded,
           color: Colors.blue[600]!,
           isMobile: isMobile,
@@ -448,5 +362,206 @@ class AdminCategoriesPage extends ConsumerWidget {
         visualDensity: VisualDensity.compact,
       ),
     );
+  }
+}
+
+class AddEditCategorySheet extends ConsumerStatefulWidget {
+  final CategoryEntity? category;
+  const AddEditCategorySheet({super.key, this.category});
+
+  @override
+  ConsumerState<AddEditCategorySheet> createState() => _AddEditCategorySheetState();
+}
+
+class _AddEditCategorySheetState extends ConsumerState<AddEditCategorySheet> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _imageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.category?.name ?? '');
+    _descriptionController = TextEditingController(text: widget.category?.description ?? '');
+    _imageController = TextEditingController(text: widget.category?.image ?? '');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.category == null ? 'Add New Category' : 'Edit Category',
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.category == null ? 'Create a new menu category.' : 'Update category details.',
+                              style: TextStyle(fontSize: 13, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(color: Color(0xFFF1F4F8), shape: BoxShape.circle),
+                          child: const Icon(Icons.close, size: 16, color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _label("Category Name"),
+                  _buildTextField(_nameController, "E.g. Italian", validator: (val) => val == null || val.isEmpty ? 'Required' : null),
+                  const SizedBox(height: 16),
+                  
+                  _label("Description"),
+                  _buildTextField(_descriptionController, "E.g. Pasta and Pizzas", maxLines: 3),
+                  const SizedBox(height: 16),
+                  
+                  _label("Image URL"),
+                  _buildTextField(_imageController, "E.g. https://example.com/image.jpg"),
+                  
+                  const SizedBox(height: 28),
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _saveCategory,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF7D29),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: Text(widget.category == null ? 'Create Category' : 'Save Changes', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.black.withAlpha(190),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1, String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      validator: validator,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.black.withAlpha(120),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.black.withAlpha(25)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xFFFF7D29),
+            width: 1.4,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
+
+  void _saveCategory() {
+    if (_formKey.currentState!.validate()) {
+      if (_nameController.text.isEmpty) return;
+      
+      final newCategory = CategoryEntity(
+        id: widget.category?.id ?? '',
+        name: _nameController.text,
+        description: _descriptionController.text,
+        image: _imageController.text,
+      );
+
+      final viewModel = ref.read(waiterDashboardViewModelProvider.notifier);
+      if (widget.category == null) {
+        viewModel.createCategory(newCategory);
+      } else {
+        viewModel.updateCategory(widget.category!.id, newCategory);
+      }
+      Navigator.pop(context);
+    }
   }
 }

@@ -2,7 +2,7 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL - change this for production
-  static const String baseUrl = 'http://192.168.1.4:5000/api';
+  static const String baseUrl = 'http://192.168.1.5:5000/api';
   // static const String baseUrl = 'http://localhost:5001/api';
 
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -44,4 +44,10 @@ class ApiEndpoints {
   static const String dashboardOverview = '/dashboard/overview';
   static const String dashboardSalesOverview = '/dashboard/sales-overview';
   static const String dashboardCategorySales = '/dashboard/category-sales';
+
+  // ============ Notification Endpoints ============
+  static const String notifications = '/notifications';
+  static String notificationById(String id) => '/notifications/$id';
+  static const String markAllNotificationsRead = '/notifications/read-all';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
 }

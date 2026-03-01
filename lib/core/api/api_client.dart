@@ -209,13 +209,13 @@ class _AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     debugPrint('DEBUG: API ERROR: ${err.response?.statusCode} at ${err.requestOptions.path}');
     debugPrint('DEBUG: ERROR MSG: ${err.message}');
     // Handle 401 Unauthorized - token expired
     if (err.response?.statusCode == 401) {
       // Clear entire session
-      _userSessionService.clearSession();
+      await _userSessionService.clearSession();
       // Note: Navigation to login usually happens via a navigation observer 
       // or by checking session state in the app's root
     }

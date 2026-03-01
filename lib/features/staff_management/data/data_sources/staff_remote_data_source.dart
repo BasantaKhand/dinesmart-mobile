@@ -22,10 +22,12 @@ class StaffRemoteDataSource {
     }
   }
 
-  Future<StaffApiModel> createStaff(StaffApiModel staff) async {
+  Future<({StaffApiModel staff, Map<String, dynamic>? credentials})> createStaff(StaffApiModel staff) async {
     try {
       final response = await _apiClient.post(ApiEndpoints.staff, data: staff.toJson());
-      return StaffApiModel.fromJson(response.data['data']['staff']);
+      final staffModel = StaffApiModel.fromJson(response.data['data']['staff']);
+      final credentials = response.data['data']['credentials'] as Map<String, dynamic>?;
+      return (staff: staffModel, credentials: credentials);
     } catch (e) {
       rethrow;
     }

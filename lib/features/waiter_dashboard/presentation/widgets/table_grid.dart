@@ -16,7 +16,7 @@ class TableGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 120,
+      height: 116,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -24,59 +24,82 @@ class TableGrid extends StatelessWidget {
         itemBuilder: (context, index) {
           final table = tables[index];
           final isSelected = selectedTable?.id == table.id;
-          final isOccupied = table.status == TableStatus.OCCUPIED;
+          final isOccupied = table.status == TableStatus.occupied;
 
           return GestureDetector(
             onTap: () => onTableSelected(table),
-            child: Container(
+            child: SizedBox(
               width: 140,
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected ? Colors.orange : (isOccupied ? Colors.red.withOpacity(0.3) : Colors.grey[200]!),
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Stack(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isOccupied ? Colors.blue : Colors.purple,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'T-${table.number}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
+                  Container(
+                    height: double.infinity,
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.orange
+                            : (isOccupied ? Colors.red : Colors.green),
+                        width: 2,
                       ),
-                      if (isOccupied)
-                        const Icon(Icons.close, color: Colors.red, size: 20),
-                    ],
-                  ),
-                  Text(
-                    isOccupied ? 'Occupied' : 'Available',
-                    style: TextStyle(
-                      color: isOccupied ? Colors.red : Colors.green,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isOccupied ? Colors.blue : Colors.purple,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                ' ${table.number} ',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Table T-${table.number}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Serving guests',
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    'Table T-${table.number}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const Text(
-                    'Serving guests',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  Positioned(
+                    top: 8,
+                    right: 20,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isOccupied ? Colors.red : Colors.green,
+                      ),
+                      child: Icon(
+                        isOccupied ? Icons.close : Icons.check,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ),

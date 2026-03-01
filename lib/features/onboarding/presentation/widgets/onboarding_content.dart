@@ -5,101 +5,85 @@ import '../../../../app/theme/app_colors.dart';
 class OnboardingContent extends StatelessWidget {
   final OnboardingItem item;
 
-  const OnboardingContent({
-    super.key,
-    required this.item,
-  });
+  const OnboardingContent({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated Icon Container
+          /// ICON CONTAINER (always brand orange)
           Container(
-            width: 280,
-            height: 280,
+            width: 110,
+            height: 110,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  item.color.withAlpha(26), // 10% opacity
-                  item.color.withAlpha(13), // 5% opacity
-                ],
-              ),
+              color: AppColors.primary, // ✅ fixed to brand color
+              borderRadius: BorderRadius.circular(26),
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Outer Ring
-                Container(
-                  width: 240,
-                  height: 240,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: item.color.withAlpha(51), // 20% opacity
-                      width: 2,
-                    ),
-                  ),
-                ),
-                // Inner Ring
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: item.gradientColors,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: item.color.withAlpha(102), // 40% opacity
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    item.icon,
-                    size: 90,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+            child: Center(
+              child: Icon(item.icon, size: 36, color: Colors.white),
             ),
           ),
-          const SizedBox(height: 60),
 
-          // Title
+          const SizedBox(height: 32),
+
+          /// Title
           Text(
             item.title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
               color: AppColors.blackText,
               height: 1.2,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 20),
 
-          // Description
+          const SizedBox(height: 14),
+
+          /// Description
           Text(
             item.description,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 17,
-              height: 1.6,
-              color: AppColors.blackText,
-              letterSpacing: 0.2,
+              fontSize: 15,
+              height: 1.55,
+              color: AppColors.blackText.withAlpha(150),
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          /// INFO TILE (flat)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black.withAlpha(18)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Swipe to continue',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.blackText.withAlpha(170),
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: AppColors.blackText.withAlpha(120),
+                ),
+              ],
             ),
           ),
         ],

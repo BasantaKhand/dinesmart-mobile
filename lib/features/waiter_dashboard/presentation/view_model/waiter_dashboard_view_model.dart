@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dinesmart_app/core/services/socket/socket_service.dart';
 import '../../domain/entities/order_entity.dart';
 import '../../domain/entities/table_entity.dart';
 import '../../domain/entities/category_entity.dart';
@@ -9,7 +11,7 @@ import '../../domain/use_cases/get_menu_items_usecase.dart';
 import '../../domain/use_cases/get_active_order_usecase.dart';
 import '../../domain/use_cases/create_order_usecase.dart';
 import '../../domain/use_cases/add_items_usecase.dart';
-import '../../domain/use_cases/mark_bill_printed_usecase.dart';
+import '../../domain/use_cases/update_order_status_usecase.dart';
 import '../state/waiter_dashboard_state.dart';
 
 import 'package:dinesmart_app/features/waiter_dashboard/domain/repository/waiter_dashboard_repository.dart';
@@ -24,7 +26,8 @@ final waiterDashboardViewModelProvider =
     getActiveOrderUseCase: ref.read(getActiveOrderUseCaseProvider),
     createOrderUseCase: ref.read(createOrderUseCaseProvider),
     addItemsUseCase: ref.read(addItemsUseCaseProvider),
-    markBillPrintedUseCase: ref.read(markBillPrintedUseCaseProvider),
+    updateOrderStatusUseCase: ref.read(updateOrderStatusUseCaseProvider),
+    socketService: ref.read(socketServiceProvider),
   );
 });
 
@@ -36,7 +39,8 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
   final GetActiveOrderUseCase getActiveOrderUseCase;
   final CreateOrderUseCase createOrderUseCase;
   final AddItemsUseCase addItemsUseCase;
-  final MarkBillPrintedUseCase markBillPrintedUseCase;
+  final UpdateOrderStatusUseCase updateOrderStatusUseCase;
+  final SocketService socketService;
 
   WaiterDashboardViewModel({
     required this.ref,
@@ -46,9 +50,55 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
     required this.getActiveOrderUseCase,
     required this.createOrderUseCase,
     required this.addItemsUseCase,
-    required this.markBillPrintedUseCase,
+    required this.updateOrderStatusUseCase,
+    required this.socketService,
   }) : super(const WaiterDashboardState()) {
+    _initializeWithSocket();
+  }
+
+  void _initializeWithSocket() {
+    socketService.connect();
+    socketService.addListener(_handleSocketNotification);
     initialize();
+  }
+
+  void _handleSocketNotification(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    if (type != null && _isRelevantNotification(type)) {
+      debugPrint('Socket: Handling notification type=$type');
+      refreshTables();
+      if (state.selectedTable != null) {
+        _refreshActiveOrder();
+      }
+    }
+  }
+
+  bool _isRelevantNotification(String type) {
+    return [
+      'NEW_ORDER',
+      'ORDER_STATUS_UPDATE',
+      'ORDER_READY',
+      'ORDER_SERVED',
+      'ORDER_COMPLETED',
+      'ORDER_CANCELLED',
+      'PAYMENT_VERIFIED',
+    ].contains(type);
+  }
+
+  Future<void> _refreshActiveOrder() async {
+    if (state.selectedTable == null) return;
+    
+    final activeOrderResult = await getActiveOrderUseCase(state.selectedTable!.id);
+    activeOrderResult.fold(
+      (failure) => state = state.copyWith(activeOrder: null),
+      (order) => state = state.copyWith(activeOrder: order),
+    );
+  }
+
+  @override
+  void dispose() {
+    socketService.removeListener(_handleSocketNotification);
+    super.dispose();
   }
 
   Future<void> initialize() async {
@@ -66,26 +116,67 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
           (categories) {
             menuItemsResult.fold(
               (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
-              (menuItems) => state = state.copyWith(
-                status: WaiterDashboardStatus.success,
-                tables: tables,
-                categories: categories,
-                menuItems: menuItems,
-              ),
+              (menuItems) {
+                final updatedSelectedTable = state.selectedTable != null
+                    ? tables.firstWhere(
+                        (t) => t.id == state.selectedTable!.id,
+                        orElse: () => state.selectedTable!,
+                      )
+                    : null;
+                state = state.copyWith(
+                  status: WaiterDashboardStatus.success,
+                  tables: tables,
+                  categories: categories,
+                  menuItems: menuItems,
+                  selectedTable: updatedSelectedTable,
+                );
+              },
             );
           },
         );
       },
     );
+
+    if (state.selectedTable != null) {
+      final activeOrderResult = await getActiveOrderUseCase(state.selectedTable!.id);
+      activeOrderResult.fold(
+        (failure) => state = state.copyWith(activeOrder: null),
+        (order) => state = state.copyWith(activeOrder: order),
+      );
+    }
   }
 
   void selectTable(TableEntity table) async {
-    state = state.copyWith(selectedTable: table, cart: [], isBillExpanded: true);
+    state = state.copyWith(
+      selectedTable: table,
+      cart: [],
+      isBillExpanded: true,
+      activeOrder: null,
+    );
     
     final activeOrderResult = await getActiveOrderUseCase(table.id);
     activeOrderResult.fold(
       (failure) => state = state.copyWith(activeOrder: null), 
       (order) => state = state.copyWith(activeOrder: order),
+    );
+  }
+
+  Future<void> refreshTables() async {
+    final tablesResult = await getTablesUseCase();
+    tablesResult.fold(
+      (failure) {},
+      (tables) {
+        final updatedSelectedTable = state.selectedTable != null
+            ? tables.firstWhere(
+                (t) => t.id == state.selectedTable!.id,
+                orElse: () => state.selectedTable!,
+              )
+            : null;
+        state = state.copyWith(
+          tables: tables,
+          selectedTable: updatedSelectedTable,
+        );
+      },
     );
   }
 
@@ -108,6 +199,12 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
 
   void addToCart(MenuItemEntity item) {
     if (state.selectedTable == null) return;
+    final activeStatus = state.activeOrder?.status;
+    if (activeStatus == OrderStatus.completed ||
+        activeStatus == OrderStatus.cancelled ||
+        activeStatus == OrderStatus.billPrinted) {
+      return;
+    }
 
     final existingIndex = state.cart.indexWhere((i) => i.menuItemId == item.id);
     if (existingIndex >= 0) {
@@ -115,10 +212,13 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       final existingItem = updatedCart[existingIndex];
       updatedCart[existingIndex] = OrderItemEntity(
         menuItemId: existingItem.menuItemId,
+        imageUrl: existingItem.imageUrl,
         name: existingItem.name,
         price: existingItem.price,
         quantity: existingItem.quantity + 1,
         total: (existingItem.quantity + 1) * existingItem.price,
+        status: existingItem.status,
+        notes: existingItem.notes,
       );
       state = state.copyWith(cart: updatedCart, isBillExpanded: true);
     } else {
@@ -126,6 +226,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
         ...state.cart,
         OrderItemEntity(
           menuItemId: item.id,
+          imageUrl: item.image,
           name: item.name,
           price: item.price,
           quantity: 1,
@@ -135,8 +236,53 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
     }
   }
 
+  void updateCartItemNote(String menuItemId, String? note) {
+    final updatedCart = state.cart
+        .map((item) {
+          if (item.menuItemId != menuItemId) return item;
+          final normalizedNote = (note ?? '').trim();
+          return OrderItemEntity(
+            menuItemId: item.menuItemId,
+            imageUrl: item.imageUrl,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            total: item.total,
+            status: item.status,
+            notes: normalizedNote.isEmpty ? null : normalizedNote,
+          );
+        })
+        .toList();
+
+    state = state.copyWith(cart: updatedCart);
+  }
+
   void toggleBillExpansion() {
     state = state.copyWith(isBillExpanded: !state.isBillExpanded);
+  }
+
+  void updateCartItemQuantity(String menuItemId, int delta) {
+    final updatedCart = <OrderItemEntity>[];
+    for (final item in state.cart) {
+      if (item.menuItemId != menuItemId) {
+        updatedCart.add(item);
+      } else {
+        final newQuantity = item.quantity + delta;
+        if (newQuantity > 0) {
+          updatedCart.add(OrderItemEntity(
+            menuItemId: item.menuItemId,
+            imageUrl: item.imageUrl,
+            name: item.name,
+            price: item.price,
+            quantity: newQuantity,
+            total: newQuantity * item.price,
+            status: item.status,
+            notes: item.notes,
+          ));
+        }
+      }
+    }
+    state = state.copyWith(cart: updatedCart);
   }
 
   void removeFromCart(String menuItemId) {
@@ -146,6 +292,12 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
 
   Future<void> createOrder() async {
     if (state.selectedTable == null || state.cart.isEmpty) return;
+    final activeStatus = state.activeOrder?.status;
+    if (activeStatus == OrderStatus.completed ||
+        activeStatus == OrderStatus.cancelled ||
+        activeStatus == OrderStatus.billPrinted) {
+      return;
+    }
 
     state = state.copyWith(status: WaiterDashboardStatus.loading);
 
@@ -157,7 +309,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       id: state.activeOrder?.id ?? '',
       tableId: state.selectedTable!.id,
       items: state.cart,
-      status: OrderStatus.COOKING,
+      status: OrderStatus.cooking,
       subtotal: subtotal,
       tax: tax,
       vat: tax,
@@ -170,26 +322,82 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
 
     result.fold(
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
-      (success) {
+      (success) async {
         state = state.copyWith(status: WaiterDashboardStatus.success, cart: []);
-        // Refresh to update table status and active order
+        await refreshTables();
+        if (state.selectedTable != null) {
+          final activeOrderResult = await getActiveOrderUseCase(state.selectedTable!.id);
+          activeOrderResult.fold(
+            (failure) {},
+            (order) => state = state.copyWith(activeOrder: order),
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> markOrderServed() async {
+    if (state.activeOrder == null || state.selectedTable == null) return;
+    if (state.activeOrder!.status != OrderStatus.cooked) return;
+
+    state = state.copyWith(status: WaiterDashboardStatus.loading);
+    final result = await updateOrderStatusUseCase(
+      state.activeOrder!.id,
+      OrderStatus.served,
+    );
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        status: WaiterDashboardStatus.error,
+        errorMessage: failure.message,
+      ),
+      (_) {
+        state = state.copyWith(status: WaiterDashboardStatus.success);
         selectTable(state.selectedTable!);
       },
     );
   }
 
-  Future<void> printBill() async {
-    if (state.activeOrder == null) return;
+  Future<void> markOrderCompleted() async {
+    if (state.activeOrder == null || state.selectedTable == null) return;
+    if (state.activeOrder!.status != OrderStatus.served) return;
 
     state = state.copyWith(status: WaiterDashboardStatus.loading);
-    
-    final result = await markBillPrintedUseCase(state.activeOrder!.id);
-    
+    final result = await updateOrderStatusUseCase(
+      state.activeOrder!.id,
+      OrderStatus.completed,
+    );
+
     result.fold(
-      (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
-      (success) {
-        state = state.copyWith(status: WaiterDashboardStatus.success);
-        selectTable(state.selectedTable!); // Refresh
+      (failure) => state = state.copyWith(
+        status: WaiterDashboardStatus.error,
+        errorMessage: failure.message,
+      ),
+      (_) async {
+        state = state.copyWith(status: WaiterDashboardStatus.success, activeOrder: null);
+        await refreshTables();
+      },
+    );
+  }
+
+  Future<void> cancelPendingOrder() async {
+    if (state.activeOrder == null || state.selectedTable == null) return;
+    if (state.activeOrder!.status != OrderStatus.pending) return;
+
+    state = state.copyWith(status: WaiterDashboardStatus.loading);
+    final result = await updateOrderStatusUseCase(
+      state.activeOrder!.id,
+      OrderStatus.cancelled,
+    );
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        status: WaiterDashboardStatus.error,
+        errorMessage: failure.message,
+      ),
+      (_) async {
+        state = state.copyWith(status: WaiterDashboardStatus.success, cart: [], activeOrder: null);
+        await refreshTables();
       },
     );
   }
@@ -201,7 +409,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
@@ -213,7 +421,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
@@ -225,12 +433,11 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
 
-  // Menu Items CRUD
   Future<void> createMenuItem(MenuItemEntity item) async {
     state = state.copyWith(status: WaiterDashboardStatus.loading);
     final result = await ref.read(waiterDashboardRepositoryProvider).createMenuItem(item);
@@ -238,7 +445,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
@@ -250,7 +457,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
@@ -262,12 +469,11 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
 
-  // Tables CRUD
   Future<void> createTable(TableEntity table) async {
     state = state.copyWith(status: WaiterDashboardStatus.loading);
     final result = await ref.read(waiterDashboardRepositoryProvider).createTable(table);
@@ -275,7 +481,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
@@ -287,7 +493,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }
@@ -299,7 +505,7 @@ class WaiterDashboardViewModel extends StateNotifier<WaiterDashboardState> {
       (failure) => state = state.copyWith(status: WaiterDashboardStatus.error, errorMessage: failure.message),
       (success) {
         state = state.copyWith(status: WaiterDashboardStatus.success);
-        initialize(); // Refresh items
+        initialize();
       },
     );
   }

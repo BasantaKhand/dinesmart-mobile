@@ -5,6 +5,7 @@ import '../../domain/entities/menu_item_entity.dart';
 import '../../domain/entities/order_entity.dart';
 
 enum WaiterDashboardStatus { initial, loading, success, error }
+
 enum SortOrder { none, ascending, descending }
 
 class WaiterDashboardState extends Equatable {
@@ -34,15 +35,17 @@ class WaiterDashboardState extends Equatable {
     this.errorMessage,
   });
 
+  static const _unset = Object();
+
   WaiterDashboardState copyWith({
     WaiterDashboardStatus? status,
     List<TableEntity>? tables,
     List<CategoryEntity>? categories,
     List<MenuItemEntity>? menuItems,
     TableEntity? selectedTable,
-    CategoryEntity? selectedCategory,
+    Object? selectedCategory = _unset,
     SortOrder? sortPriceOrder,
-    OrderEntity? activeOrder,
+    Object? activeOrder = _unset,
     List<OrderItemEntity>? cart,
     bool? isBillExpanded,
     String? errorMessage,
@@ -53,9 +56,13 @@ class WaiterDashboardState extends Equatable {
       categories: categories ?? this.categories,
       menuItems: menuItems ?? this.menuItems,
       selectedTable: selectedTable ?? this.selectedTable,
-      selectedCategory: selectedCategory ?? this.selectedCategory,
+      selectedCategory: identical(selectedCategory, _unset)
+          ? this.selectedCategory
+          : selectedCategory as CategoryEntity?,
       sortPriceOrder: sortPriceOrder ?? this.sortPriceOrder,
-      activeOrder: activeOrder ?? this.activeOrder,
+      activeOrder: identical(activeOrder, _unset)
+          ? this.activeOrder
+          : activeOrder as OrderEntity?,
       cart: cart ?? this.cart,
       isBillExpanded: isBillExpanded ?? this.isBillExpanded,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -64,16 +71,16 @@ class WaiterDashboardState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        tables,
-        categories,
-        menuItems,
-        selectedTable,
-        selectedCategory,
-        sortPriceOrder,
-        activeOrder,
-        cart,
-        isBillExpanded,
-        errorMessage,
-      ];
+    status,
+    tables,
+    categories,
+    menuItems,
+    selectedTable,
+    selectedCategory,
+    sortPriceOrder,
+    activeOrder,
+    cart,
+    isBillExpanded,
+    errorMessage,
+  ];
 }

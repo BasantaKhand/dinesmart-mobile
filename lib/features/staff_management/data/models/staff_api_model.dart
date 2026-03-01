@@ -33,8 +33,8 @@ class StaffApiModel {
       'name': name,
       'email': email,
       if (phone != null) 'phone': phone,
-      'role': role,
-      'status': status,
+      'role': role.toUpperCase(),
+      'status': status.toUpperCase(),
     };
   }
 
@@ -50,11 +50,16 @@ class StaffApiModel {
   }
 
   static StaffRole _mapRole(String role) {
-    return role == 'waiter' ? StaffRole.waiter : StaffRole.waiter;
+    switch (role.toUpperCase()) {
+      case 'CASHIER':
+        return StaffRole.cashier;
+      default:
+        return StaffRole.waiter;
+    }
   }
 
   static StaffStatus _mapStatus(String status) {
-    return status == 'inactive' ? StaffStatus.inactive : StaffStatus.active;
+    return status.toUpperCase() == 'INACTIVE' ? StaffStatus.inactive : StaffStatus.active;
   }
 
   factory StaffApiModel.fromEntity(StaffEntity entity) {

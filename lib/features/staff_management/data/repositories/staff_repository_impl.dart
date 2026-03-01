@@ -27,11 +27,11 @@ class StaffRepositoryImpl implements IStaffRepository {
   }
 
   @override
-  Future<Either<Failure, StaffEntity>> createStaff(StaffEntity staff) async {
+  Future<Either<Failure, ({StaffEntity staff, Map<String, dynamic>? credentials})>> createStaff(StaffEntity staff) async {
     try {
       final model = StaffApiModel.fromEntity(staff);
       final result = await _remoteDataSource.createStaff(model);
-      return Right(result.toEntity());
+      return Right((staff: result.staff.toEntity(), credentials: result.credentials));
     } catch (e) {
       return Left(ApiFailure(message: ErrorUtils.getMessage(e)));
     }

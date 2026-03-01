@@ -13,7 +13,7 @@ class GetOrdersUseCase {
 
   GetOrdersUseCase(this.repository);
 
-  Future<Either<Failure, List<OrderEntity>>> call() {
-    return repository.getOrders();
+  Future<Either<Failure, List<OrderEntity>>> call({bool forceRefresh = false}) {
+    return repository.getOrders(forceRefresh: forceRefresh);
   }
 }

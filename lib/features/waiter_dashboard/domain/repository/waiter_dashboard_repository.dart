@@ -15,7 +15,7 @@ abstract class IWaiterDashboardRepository {
   Future<Either<Failure, bool>> createOrder(OrderEntity order);
   Future<Either<Failure, bool>> addItemsToOrder(OrderEntity order);
   Future<Either<Failure, bool>> markBillPrinted(String orderId);
-  Future<Either<Failure, List<OrderEntity>>> getOrders();
+  Future<Either<Failure, List<OrderEntity>>> getOrders({bool forceRefresh = false});
   Future<Either<Failure, bool>> createCategory(CategoryEntity category);
   Future<Either<Failure, bool>> updateCategory(String id, CategoryEntity category);
   Future<Either<Failure, bool>> deleteCategory(String id);

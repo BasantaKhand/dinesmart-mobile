@@ -181,7 +181,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
         width: isFullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: state.selectedCategory != null ? Colors.orange.withOpacity(0.1) : Colors.white,
+          color: state.selectedCategory != null ? Colors.orange.withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: state.selectedCategory != null ? Colors.orange : Colors.grey[200]!),
         ),
@@ -222,7 +222,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
         width: isFullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: isSorting ? Colors.blue.withOpacity(0.1) : Colors.white,
+          color: isSorting ? Colors.blue.withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: isSorting ? Colors.blue : Colors.grey[200]!),
         ),
@@ -310,14 +310,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[100]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!, width: 1.2),
       ),
       child: Row(
         children: [
@@ -331,7 +324,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
                   ? Image.network(
                       item.image!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.restaurant, color: Colors.grey),
+                      errorBuilder: (_, _, _) => const Icon(Icons.restaurant, color: Colors.grey),
                     )
                   : const Icon(Icons.restaurant, color: Colors.grey, size: 32),
             ),
@@ -363,7 +356,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -408,7 +401,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, size: 18, color: color),
@@ -495,7 +488,7 @@ class AdminMenuItemsPage extends ConsumerWidget {
   Widget _buildCategoryDropdown(WidgetRef ref, String? selectedId, Function(String?) onChanged) {
     final state = ref.watch(waiterDashboardViewModelProvider);
     return DropdownButtonFormField<String>(
-      value: selectedId,
+      initialValue: selectedId,
       decoration: InputDecoration(
         labelText: 'Category',
         prefixIcon: const Icon(Icons.category_outlined, color: Colors.orange, size: 20),

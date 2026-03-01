@@ -165,8 +165,7 @@ class AdminCategoriesPage extends ConsumerWidget {
     return Material(
       color: Colors.orange,
       borderRadius: BorderRadius.circular(14),
-      elevation: 2,
-      shadowColor: Colors.orange.withOpacity(0.4),
+      elevation: 0,
       child: InkWell(
         onTap: () => _showCategoryDialog(context, ref),
         borderRadius: BorderRadius.circular(14),
@@ -279,15 +278,7 @@ class AdminCategoriesPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            spreadRadius: 0,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: Colors.grey[200]!, width: 1.2),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
@@ -304,13 +295,7 @@ class AdminCategoriesPage extends ConsumerWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(isMobile ? 14 : 20),
                   color: Colors.grey[50],
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: Colors.grey[100]!),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(isMobile ? 14 : 20),
@@ -318,7 +303,7 @@ class AdminCategoriesPage extends ConsumerWidget {
                       ? Image.network(
                           category.image!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (_, _, _) => const Icon(
                             Icons.broken_image_outlined,
                             color: Colors.grey,
                           ),
@@ -452,7 +437,7 @@ class AdminCategoriesPage extends ConsumerWidget {
   Widget _buildIconButton({required VoidCallback onPressed, required IconData icon, required Color color, bool isMobile = false}) {
     return Container(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
       ),
       child: IconButton(

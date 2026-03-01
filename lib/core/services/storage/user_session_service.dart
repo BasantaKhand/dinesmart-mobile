@@ -17,6 +17,7 @@ class UserSessionService {
   final SharedPreferences _prefs;
   final _secureStorage = const FlutterSecureStorage();
   static const String _tokenKey = 'auth_token';
+  static const String _tokenFallbackKey = 'auth_token_fallback';
 
   // Keys for storing user data
   static const String _keyIsLoggedIn = 'is_logged_in';
@@ -60,6 +61,7 @@ class UserSessionService {
     }
     if (token != null) {
       await _secureStorage.write(key: _tokenKey, value: token);
+      await _prefs.setString(_tokenFallbackKey, token);
     }
   }
 
@@ -111,7 +113,36 @@ class UserSessionService {
 
   // Get authentication token from secure storage
   Future<String?> getToken() async {
-    return await _secureStorage.read(key: _tokenKey);
+    final secureToken = await _secureStorage.read(key: _tokenKey);
+    if (secureToken != null && secureToken.isNotEmpty) {
+      if (_prefs.getString(_tokenFallbackKey) != secureToken) {
+        await _prefs.setString(_tokenFallbackKey, secureToken);
+      }
+      return secureToken;
+    }
+
+    final fallbackToken = _prefs.getString(_tokenFallbackKey);
+    if (fallbackToken != null && fallbackToken.isNotEmpty) {
+      await _secureStorage.write(key: _tokenKey, value: fallbackToken);
+      return fallbackToken;
+    }
+
+    return null;
+  }
+
+  Future<bool> hasValidSession() async {
+    if (!isLoggedIn()) return false;
+
+    final userId = getCurrentUserId();
+    final role = getCurrentUserRole();
+    final token = await getToken();
+
+    return userId != null &&
+        userId.isNotEmpty &&
+        role != null &&
+        role.isNotEmpty &&
+        token != null &&
+        token.isNotEmpty;
   }
 
   // Clear user session (logout)
@@ -125,6 +156,7 @@ class UserSessionService {
     await _prefs.remove(_keyUserProfilePicture);
     await _prefs.remove(_keyUserRole);
     await _prefs.remove(_keyRestaurantId);
+    await _prefs.remove(_tokenFallbackKey);
     await _secureStorage.delete(key: _tokenKey);
   }
 }

@@ -181,7 +181,7 @@ class WaiterDashboardRemoteDataSource {
 
   Future<bool> updateOrderStatus(String orderId, String status) async {
     try {
-      await _apiClient.patch(
+      await _apiClient.put(
         ApiEndpoints.updateOrderStatus(orderId),
         data: {'status': status},
       );

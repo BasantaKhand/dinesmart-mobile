@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/error_utils.dart';
 import '../../domain/entities/staff_entity.dart';
 import '../../domain/repository/staff_repository.dart';
 import '../data_sources/staff_remote_data_source.dart';
@@ -21,12 +21,8 @@ class StaffRepositoryImpl implements IStaffRepository {
     try {
       final result = await _remoteDataSource.getStaff();
       return Right(result.map((m) => m.toEntity()).toList());
-    } on DioException catch (e) {
-      return Left(ApiFailure(
-          message: e.response?.data['message'] ?? e.message ?? 'Operation failed',
-          statusCode: e.response?.statusCode));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      return Left(ApiFailure(message: ErrorUtils.getMessage(e)));
     }
   }
 
@@ -36,12 +32,8 @@ class StaffRepositoryImpl implements IStaffRepository {
       final model = StaffApiModel.fromEntity(staff);
       final result = await _remoteDataSource.createStaff(model);
       return Right(result.toEntity());
-    } on DioException catch (e) {
-      return Left(ApiFailure(
-          message: e.response?.data['message'] ?? e.message ?? 'Operation failed',
-          statusCode: e.response?.statusCode));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      return Left(ApiFailure(message: ErrorUtils.getMessage(e)));
     }
   }
 
@@ -51,12 +43,8 @@ class StaffRepositoryImpl implements IStaffRepository {
       final model = StaffApiModel.fromEntity(staff);
       final result = await _remoteDataSource.updateStaff(staff.id, model);
       return Right(result.toEntity());
-    } on DioException catch (e) {
-      return Left(ApiFailure(
-          message: e.response?.data['message'] ?? e.message ?? 'Operation failed',
-          statusCode: e.response?.statusCode));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      return Left(ApiFailure(message: ErrorUtils.getMessage(e)));
     }
   }
 
@@ -65,12 +53,8 @@ class StaffRepositoryImpl implements IStaffRepository {
     try {
       final result = await _remoteDataSource.deleteStaff(id);
       return Right(result);
-    } on DioException catch (e) {
-      return Left(ApiFailure(
-          message: e.response?.data['message'] ?? e.message ?? 'Operation failed',
-          statusCode: e.response?.statusCode));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      return Left(ApiFailure(message: ErrorUtils.getMessage(e)));
     }
   }
 
@@ -79,12 +63,8 @@ class StaffRepositoryImpl implements IStaffRepository {
     try {
       final result = await _remoteDataSource.toggleStaffStatus(id);
       return Right(result.toEntity());
-    } on DioException catch (e) {
-      return Left(ApiFailure(
-          message: e.response?.data['message'] ?? e.message ?? 'Operation failed',
-          statusCode: e.response?.statusCode));
     } catch (e) {
-      return Left(Failure(e.toString()));
+      return Left(ApiFailure(message: ErrorUtils.getMessage(e)));
     }
   }
 }

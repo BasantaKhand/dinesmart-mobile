@@ -4,6 +4,8 @@ import 'package:dinesmart_app/features/auth/domain/usecases/send_request_usecase
 import 'package:dinesmart_app/features/auth/domain/usecases/update_password_usecase.dart';
 import 'package:dinesmart_app/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:dinesmart_app/features/auth/presentation/state/auth_state.dart';
+import 'package:dinesmart_app/core/services/storage/user_session_service.dart';
+import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final authViewModelProvider = NotifierProvider<AuthViewModel, AuthState>(
@@ -103,13 +105,14 @@ class AuthViewModel extends Notifier<AuthState> {
       ),
     );
 
-    result.fold(
+    result.fold<void>(
       (failure) => state = state.copyWith(
         status: AuthStatus.passwordChangeRequired,
         errorMessage: failure.message,
       ),
-      (_) => state = state.copyWith(
+      (user) => state = state.copyWith(
         status: AuthStatus.authenticated,
+        user: user,
         errorMessage: null,
       ),
     );
@@ -144,7 +147,7 @@ class AuthViewModel extends Notifier<AuthState> {
       ),
     );
 
-    result.fold(
+    result.fold<void>(
       (failure) => state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: failure.message,
@@ -159,5 +162,31 @@ class AuthViewModel extends Notifier<AuthState> {
 
   void clearError() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  Future<void> hydrateFromSession() async {
+    final sessionService = ref.read(userSessionServiceProvider);
+    final hasValidSession = await sessionService.hasValidSession();
+    if (!hasValidSession) return;
+
+    final sessionUser = AuthEntity(
+      authId: sessionService.getCurrentUserId(),
+      restaurantName: '',
+      ownerName: sessionService.getCurrentUserFullName() ?? '',
+      email: sessionService.getCurrentUserEmail() ?? '',
+      phoneNumber: sessionService.getCurrentUserPhoneNumber() ?? '',
+      address: '',
+      message: '',
+      username: sessionService.getCurrentUserUsername(),
+      role: sessionService.getCurrentUserRole(),
+      restaurantId: sessionService.getCurrentRestaurantId(),
+      profilePicture: sessionService.getCurrentUserProfilePicture(),
+    );
+
+    state = state.copyWith(
+      status: AuthStatus.authenticated,
+      user: sessionUser,
+      errorMessage: null,
+    );
   }
 }

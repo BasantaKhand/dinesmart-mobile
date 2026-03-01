@@ -106,7 +106,7 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> changePassword(String currentPassword, String newPassword) async {
+  Future<Either<Failure, AuthEntity>> changePassword(String currentPassword, String newPassword) async {
     final isConnected = await _networkInfo.isConnected;
     if (!isConnected) {
       return const Left(ApiFailure(message: 'No internet connection'));
@@ -114,8 +114,8 @@ class AuthRepositoryImpl implements IAuthRepository {
 
     try {
       final result = await _authRemoteDatasource.changePassword(currentPassword, newPassword);
-      if (result) {
-        return const Right(true);
+      if (result != null) {
+        return Right(result.toEntity());
       }
       return const Left(ApiFailure(message: 'Failed to change password'));
     } on DioException catch (e) {

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum TableStatus { AVAILABLE, OCCUPIED, RESERVED }
+enum TableStatus { available, occupied, reserved }
 
 class TableEntity extends Equatable {
   final String id;

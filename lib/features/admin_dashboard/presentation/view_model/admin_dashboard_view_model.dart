@@ -31,7 +31,7 @@ class AdminDashboardViewModel extends StateNotifier<AdminDashboardState> {
   Future<void> initialize() async {
     state = state.copyWith(status: AdminDashboardStatus.loading);
     
-    final result = await getOrdersUseCase();
+    final result = await getOrdersUseCase(forceRefresh: true);
     
     result.fold(
       (failure) {
@@ -101,4 +101,23 @@ class AdminDashboardViewModel extends StateNotifier<AdminDashboardState> {
   }
 
   Future<void> refresh() => initialize();
+
+  void setSearchQuery(String query) {
+    state = state.copyWith(searchQuery: query);
+  }
+
+  void setStatusFilter(OrderStatus? status) {
+    state = state.copyWith(selectedStatus: status);
+  }
+
+  void setPaymentStatusFilter(PaymentStatus? status) {
+    state = state.copyWith(selectedPaymentStatus: status);
+  }
+
+  void clearFilters() {
+    state = state.copyWith(
+      clearStatus: true,
+      clearPayment: true,
+    );
+  }
 }

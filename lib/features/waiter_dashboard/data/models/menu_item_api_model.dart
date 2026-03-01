@@ -20,6 +20,11 @@ class MenuItemApiModel {
   });
 
   factory MenuItemApiModel.fromJson(Map<String, dynamic> json) {
+    final rawCategory = json['categoryId'];
+    final resolvedCategoryId = rawCategory is Map<String, dynamic>
+        ? (rawCategory['_id']?.toString() ?? '')
+        : (rawCategory?.toString() ?? '');
+
     return MenuItemApiModel(
       id: json['_id'],
       name: json['name'],
@@ -27,7 +32,7 @@ class MenuItemApiModel {
       image: json['image'],
       price: (json['price'] as num).toDouble(),
       originalPrice: (json['originalPrice'] as num?)?.toDouble(),
-      categoryId: json['categoryId']['_id'] ?? json['categoryId'],
+      categoryId: resolvedCategoryId,
     );
   }
 

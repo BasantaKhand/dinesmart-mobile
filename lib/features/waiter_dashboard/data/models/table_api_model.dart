@@ -35,7 +35,7 @@ class TableApiModel {
       id: entity.id,
       number: entity.number,
       capacity: entity.capacity,
-      status: entity.status.name,
+      status: _toApiStatus(entity.status),
     );
   }
 
@@ -51,11 +51,22 @@ class TableApiModel {
   static TableStatus _mapStatus(String status) {
     switch (status) {
       case 'OCCUPIED':
-        return TableStatus.OCCUPIED;
+        return TableStatus.occupied;
       case 'RESERVED':
-        return TableStatus.RESERVED;
+        return TableStatus.reserved;
       default:
-        return TableStatus.AVAILABLE;
+        return TableStatus.available;
+    }
+  }
+
+  static String _toApiStatus(TableStatus status) {
+    switch (status) {
+      case TableStatus.occupied:
+        return 'OCCUPIED';
+      case TableStatus.reserved:
+        return 'RESERVED';
+      case TableStatus.available:
+        return 'AVAILABLE';
     }
   }
 }

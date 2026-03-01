@@ -5,6 +5,7 @@ class OrderApiModel {
   final String tableId;
   final List<OrderItemApiModel> items;
   final String status;
+  final String? paymentStatus;
   final double subtotal;
   final double tax;
   final double vat;
@@ -15,6 +16,7 @@ class OrderApiModel {
   final String? tableNumber;
   final String? waiterName;
   final DateTime? createdAt;
+  final bool billPrinted;
 
   OrderApiModel({
     this.id,
@@ -31,12 +33,16 @@ class OrderApiModel {
     this.tableNumber,
     this.waiterName,
     this.createdAt,
+    this.billPrinted = false,
+    this.paymentStatus,
   });
 
   factory OrderApiModel.fromJson(Map<String, dynamic> json) {
     return OrderApiModel(
       id: json['_id'],
-      tableId: json['tableId'] is Map ? json['tableId']['_id'] : json['tableId'],
+      tableId: json['tableId'] is Map
+          ? json['tableId']['_id']
+          : json['tableId'],
       tableNumber: json['tableId'] is Map ? json['tableId']['number'] : null,
       waiterName: json['waiterId'] is Map ? json['waiterId']['name'] : null,
       items: (json['items'] as List)
@@ -50,13 +56,18 @@ class OrderApiModel {
       notes: json['notes'],
       paymentMethod: json['paymentMethod'],
       transactionId: json['transactionId'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      billPrinted: json['billPrinted'] == true,
+      paymentStatus: json['paymentStatus'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'tableId': tableId,
+      'orderType': 'DINE_IN', // Mobile waiter app always creates dine-in orders
       'items': items.map((i) => i.toJson()).toList(),
       // 'status': status, // Status is managed by the backend during creation
       'subtotal': subtotal,
@@ -73,7 +84,8 @@ class OrderApiModel {
       id: id ?? '',
       tableId: tableId,
       items: items.map((i) => i.toEntity()).toList(),
-      status: _mapStatus(status),
+      status: _mapStatus(status, billPrinted),
+      paymentStatus: _mapPaymentStatus(paymentStatus),
       subtotal: subtotal,
       tax: tax,
       vat: vat,
@@ -87,20 +99,26 @@ class OrderApiModel {
     );
   }
 
-  static OrderStatus _mapStatus(String status) {
+  static OrderStatus _mapStatus(String status, bool billPrinted) {
+    if (billPrinted) {
+      return OrderStatus.billPrinted;
+    }
+
     switch (status) {
+      case 'PENDING':
+        return OrderStatus.pending;
       case 'COOKING':
-        return OrderStatus.COOKING;
+        return OrderStatus.cooking;
+      case 'COOKED':
+        return OrderStatus.cooked;
       case 'SERVED':
-        return OrderStatus.SERVED;
-      case 'BILL_PRINTED':
-        return OrderStatus.BILL_PRINTED;
+        return OrderStatus.served;
       case 'COMPLETED':
-        return OrderStatus.COMPLETED;
+        return OrderStatus.completed;
       case 'CANCELLED':
-        return OrderStatus.CANCELLED;
+        return OrderStatus.cancelled;
       default:
-        return OrderStatus.PENDING;
+        return OrderStatus.pending;
     }
   }
 
@@ -117,12 +135,29 @@ class OrderApiModel {
       notes: entity.notes,
       paymentMethod: entity.paymentMethod,
       transactionId: entity.transactionId,
+      billPrinted: entity.status == OrderStatus.billPrinted,
+      paymentStatus: entity.paymentStatus?.name.toUpperCase(),
     );
+  }
+
+  static PaymentStatus? _mapPaymentStatus(String? status) {
+    if (status == null) return null;
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return PaymentStatus.pending;
+      case 'PAID':
+        return PaymentStatus.paid;
+      case 'PARTIAL':
+        return PaymentStatus.partial;
+      default:
+        return PaymentStatus.pending;
+    }
   }
 }
 
 class OrderItemApiModel {
   final String menuItemId;
+  final String? imageUrl;
   final String name;
   final double price;
   final int quantity;
@@ -132,6 +167,7 @@ class OrderItemApiModel {
 
   OrderItemApiModel({
     required this.menuItemId,
+    this.imageUrl,
     required this.name,
     required this.price,
     required this.quantity,
@@ -142,7 +178,12 @@ class OrderItemApiModel {
 
   factory OrderItemApiModel.fromJson(Map<String, dynamic> json) {
     return OrderItemApiModel(
-      menuItemId: json['menuItemId'] is Map ? (json['menuItemId']['_id'] ?? '') : (json['menuItemId'] ?? ''),
+      menuItemId: json['menuItemId'] is Map
+          ? (json['menuItemId']['_id'] ?? '')
+          : (json['menuItemId'] ?? ''),
+        imageUrl: json['menuItemId'] is Map
+          ? json['menuItemId']['image']?.toString()
+          : json['image']?.toString(),
       name: json['name'],
       price: (json['price'] as num).toDouble(),
       quantity: json['quantity'] as int,
@@ -167,6 +208,7 @@ class OrderItemApiModel {
   OrderItemEntity toEntity() {
     return OrderItemEntity(
       menuItemId: menuItemId,
+      imageUrl: imageUrl,
       name: name,
       price: price,
       quantity: quantity,
@@ -179,6 +221,7 @@ class OrderItemApiModel {
   factory OrderItemApiModel.fromEntity(OrderItemEntity entity) {
     return OrderItemApiModel(
       menuItemId: entity.menuItemId,
+      imageUrl: entity.imageUrl,
       name: entity.name,
       price: entity.price,
       quantity: entity.quantity,

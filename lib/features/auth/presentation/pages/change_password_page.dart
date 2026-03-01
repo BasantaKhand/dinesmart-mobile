@@ -1,6 +1,7 @@
 import 'package:dinesmart_app/app/routes/app_routes.dart';
 import 'package:dinesmart_app/app/theme/app_colors.dart';
 import 'package:dinesmart_app/core/utils/snackbar_utils.dart';
+import 'package:dinesmart_app/core/widgets/button_widget.dart';
 import 'package:dinesmart_app/features/auth/presentation/state/auth_state.dart';
 import 'package:dinesmart_app/features/auth/presentation/view_model/auth_viewmodel.dart';
 import 'package:dinesmart_app/features/dashboard/presentation/pages/dashboard_page.dart';
@@ -36,18 +37,82 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
 
   Future<void> _handleChangePassword() async {
     if (_formKey.currentState!.validate()) {
-      await ref.read(authViewModelProvider.notifier).changePassword(
+      await ref
+          .read(authViewModelProvider.notifier)
+          .changePassword(
             currentPassword: _currentPasswordController.text,
             newPassword: _newPasswordController.text,
           );
     }
   }
 
+  TextStyle get _titleStyle => const TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    color: AppColors.blackText,
+    letterSpacing: -0.5,
+  );
+
+  TextStyle get _subtitleStyle => TextStyle(
+    fontSize: 14,
+    height: 1.4,
+    fontWeight: FontWeight.w500,
+    color: AppColors.blackText.withAlpha(150),
+  );
+
+  TextStyle get _labelStyle => TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: AppColors.blackText.withAlpha(190),
+  );
+
+  InputDecoration _fieldDecoration({required String hint, Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: AppColors.blackText.withAlpha(120),
+      ),
+      filled: true,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.black.withAlpha(25)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: AppColors.primary.withAlpha(140),
+          width: 1.4,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.red.withAlpha(170), width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.red.withAlpha(220), width: 1.4),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      suffixIcon: suffixIcon,
+    );
+  }
+
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(text, style: _labelStyle),
+  );
+
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
-        SnackbarUtils.showSuccess(context, 'Password changed successfully!');
+        SnackbarUtils.showSuccess(context, 'Password updated successfully!');
         if (next.user?.role == 'WAITER') {
           AppRoutes.pushAndRemoveUntil(context, const WaiterDashboardPage());
         } else if (next.user?.role == 'CASHIER') {
@@ -57,9 +122,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
         } else {
           AppRoutes.pushAndRemoveUntil(context, const DashboardPage());
         }
-      } else if (next.status == AuthStatus.passwordChangeRequired &&
-          next.errorMessage != null &&
-          previous?.errorMessage != next.errorMessage) {
+      } else if (next.status == AuthStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
     });
@@ -68,70 +131,116 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
     final isLoading = authState.status == AuthStatus.loading;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black.withAlpha(20),
+        leading: IconButton(
+          onPressed: () => AppRoutes.pop(context),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black,
+            size: 20,
+          ),
+        ),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              IconButton(
-                onPressed: () => AppRoutes.pop(context),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.all(12),
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                'Change\nPassword',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w900,
-                  height: 1.1,
-                  letterSpacing: -1.5,
-                ),
-              ),
-              const SizedBox(height: 12),
+              Text('Change Password', style: _titleStyle),
+              const SizedBox(height: 8),
               Text(
-                'You must update your temporary password to secure your account.',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
+                'Update your password to keep your account secure.',
+                style: _subtitleStyle,
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
               Form(
                 key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildPasswordField(
+                    _label('Current Password'),
+                    TextFormField(
                       controller: _currentPasswordController,
-                      label: 'Current Password',
-                      obscure: _obscureCurrent,
-                      onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildPasswordField(
-                      controller: _newPasswordController,
-                      label: 'New Password',
-                      obscure: _obscureNew,
-                      onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                      obscureText: _obscureCurrent,
+                      decoration: _fieldDecoration(
+                        hint: 'Enter current password',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureCurrent
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            color: AppColors.blackText.withAlpha(120),
+                            size: 20,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureCurrent = !_obscureCurrent,
+                          ),
+                        ),
+                      ),
                       validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
+                        if (value == null || value.isEmpty)
+                          return 'Please enter current password';
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
-                    _buildPasswordField(
+                    const SizedBox(height: 20),
+                    _label('New Password'),
+                    TextFormField(
+                      controller: _newPasswordController,
+                      obscureText: _obscureNew,
+                      decoration: _fieldDecoration(
+                        hint: 'Enter new password',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureNew
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            color: AppColors.blackText.withAlpha(120),
+                            size: 20,
+                          ),
+                          onPressed: () =>
+                              setState(() => _obscureNew = !_obscureNew),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.length < 6)
+                          return 'Password must be at least 6 characters';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _label('Confirm New Password'),
+                    TextFormField(
                       controller: _confirmPasswordController,
-                      label: 'Confirm New Password',
-                      obscure: _obscureConfirm,
-                      onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      obscureText: _obscureConfirm,
+                      decoration: _fieldDecoration(
+                        hint: 'Confirm new password',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirm
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            color: AppColors.blackText.withAlpha(120),
+                            size: 20,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
+                        ),
+                      ),
                       validator: (value) {
                         if (value != _newPasswordController.text) {
                           return 'Passwords do not match';
@@ -139,30 +248,12 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 48),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _handleChangePassword,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                                'Update Password',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
+                    const SizedBox(height: 40),
+                    CustomButton(
+                      text: isLoading ? 'Updating...' : 'Update Password',
+                      onPressed: isLoading ? null : _handleChangePassword,
+                      isLoading: isLoading,
+                      backgroundColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -171,63 +262,6 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String label,
-    required bool obscure,
-    required VoidCallback onToggle,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          obscureText: obscure,
-          validator: validator ??
-              (value) {
-                if (value == null || value.isEmpty) {
-                  return 'This field is required';
-                }
-                return null;
-              },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            hintText: '••••••••',
-            hintStyle: TextStyle(color: Colors.grey[300]),
-            suffixIcon: IconButton(
-              icon: Icon(
-                obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                color: Colors.grey[400],
-                size: 20,
-              ),
-              onPressed: onToggle,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.redAccent),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          ),
-        ),
-      ],
     );
   }
 }

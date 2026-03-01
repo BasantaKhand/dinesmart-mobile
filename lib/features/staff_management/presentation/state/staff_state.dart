@@ -9,6 +9,7 @@ class StaffManagementState extends Equatable {
   final List<StaffEntity> filteredStaffList;
   final String? errorMessage;
   final String searchQuery;
+  final Map<String, dynamic>? newStaffCredentials;
 
   const StaffManagementState({
     this.status = StaffStatusState.initial,
@@ -16,6 +17,7 @@ class StaffManagementState extends Equatable {
     this.filteredStaffList = const [],
     this.errorMessage,
     this.searchQuery = '',
+    this.newStaffCredentials,
   });
 
   StaffManagementState copyWith({
@@ -24,6 +26,8 @@ class StaffManagementState extends Equatable {
     List<StaffEntity>? filteredStaffList,
     String? errorMessage,
     String? searchQuery,
+    Map<String, dynamic>? newStaffCredentials,
+    bool clearCredentials = false,
   }) {
     return StaffManagementState(
       status: status ?? this.status,
@@ -31,9 +35,10 @@ class StaffManagementState extends Equatable {
       filteredStaffList: filteredStaffList ?? this.filteredStaffList,
       errorMessage: errorMessage ?? this.errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
+      newStaffCredentials: clearCredentials ? null : (newStaffCredentials ?? this.newStaffCredentials),
     );
   }
 
   @override
-  List<Object?> get props => [status, staffList, filteredStaffList, errorMessage, searchQuery];
+  List<Object?> get props => [status, staffList, filteredStaffList, errorMessage, searchQuery, newStaffCredentials];
 }

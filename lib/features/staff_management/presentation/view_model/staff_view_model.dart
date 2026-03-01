@@ -65,8 +65,18 @@ class StaffViewModel extends StateNotifier<StaffManagementState> {
     final result = await createStaffUseCase(staff);
     result.fold(
       (failure) => state = state.copyWith(status: StaffStatusState.error, errorMessage: failure.message),
-      (_) => getStaff(),
+      (data) {
+        state = state.copyWith(
+          status: StaffStatusState.success, 
+          newStaffCredentials: data.credentials,
+        );
+        getStaff();
+      },
     );
+  }
+
+  void clearCredentials() {
+    state = state.copyWith(clearCredentials: true);
   }
 
   Future<void> updateStaff(StaffEntity staff) async {

@@ -24,7 +24,7 @@ class TableApiModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'number': number,
+      if (number.isNotEmpty) 'number': number,
       'capacity': capacity,
       'status': status,
     };

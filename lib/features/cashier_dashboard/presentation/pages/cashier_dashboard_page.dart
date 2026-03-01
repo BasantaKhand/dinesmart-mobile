@@ -28,7 +28,7 @@ class CashierDashboardPage extends ConsumerWidget {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Image.asset(
-            'assets/logos/dinesmart_logo.png',
+            'assets/logos/logo.png',
             height: 32,
             errorBuilder: (c, e, s) => Container(
               decoration: BoxDecoration(
@@ -162,7 +162,7 @@ class CashierDashboardPage extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(icon, color: color, size: 28),

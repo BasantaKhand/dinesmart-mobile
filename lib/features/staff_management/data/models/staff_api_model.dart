@@ -50,11 +50,11 @@ class StaffApiModel {
   }
 
   static StaffRole _mapRole(String role) {
-    return role == 'CASHIER' ? StaffRole.CASHIER : StaffRole.WAITER;
+    return role == 'waiter' ? StaffRole.waiter : StaffRole.waiter;
   }
 
   static StaffStatus _mapStatus(String status) {
-    return status == 'INACTIVE' ? StaffStatus.INACTIVE : StaffStatus.ACTIVE;
+    return status == 'inactive' ? StaffStatus.inactive : StaffStatus.active;
   }
 
   factory StaffApiModel.fromEntity(StaffEntity entity) {

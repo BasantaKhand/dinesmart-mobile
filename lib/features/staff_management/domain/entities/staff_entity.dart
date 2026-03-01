@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-enum StaffRole { WAITER, CASHIER }
+enum StaffRole { waiter, cashier }
 
-enum StaffStatus { ACTIVE, INACTIVE }
+enum StaffStatus { active, inactive }
 
 class StaffEntity extends Equatable {
   final String id;

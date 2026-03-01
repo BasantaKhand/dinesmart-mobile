@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+
 import '../view_model/admin_dashboard_view_model.dart';
 import '../state/admin_dashboard_state.dart';
-import 'package:intl/intl.dart';
-import 'dart:ui' as ui;
+import 'package:dinesmart_app/features/admin_dashboard/domain/entities/admin_statistics.dart';
 
 class AdminOverviewPage extends ConsumerWidget {
   const AdminOverviewPage({super.key});
+
+  // Web-like flat tokens
+  static const Color _pageBg = Color(0xFFF7F7F8);
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _text = Color(0xFF111827);
+  static const Color _muted = Color(0xFF6B7280);
+  static const Color _muted2 = Color(0xFF9CA3AF);
+  static const Color _brand = Color(0xFFFF7D29);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14,40 +24,34 @@ class AdminOverviewPage extends ConsumerWidget {
     final stats = state.adminStatistics;
 
     if (state.status == AdminDashboardStatus.loading && stats == null) {
-      return const Center(child: CircularProgressIndicator(color: Colors.orange));
+      return const Center(child: CircularProgressIndicator(color: _brand));
     }
 
     return Container(
-      color: Colors.white,
+      color: _pageBg,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isMobile = constraints.maxWidth < 700;
-  
+          final width = constraints.maxWidth;
+          final isMobile = width < 700;
+          final isDesktop = width >= 1100;
+
           return RefreshIndicator(
             onRefresh: () => ref.read(adminDashboardViewModelProvider.notifier).initialize(),
-            color: const Color(0xFFFF7D29),
+            color: _brand,
             backgroundColor: Colors.white,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 24.0 : 32.0,
-                vertical: 24.0,
+                horizontal: isMobile ? 16.0 : 28.0,
+                vertical: isMobile ? 16.0 : 24.0,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Overview',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.black, letterSpacing: -0.5),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Welcome back! Here\'s what\'s happening today.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 32),
-                  _buildV3StatGrid(context, state, isMobile),
-                  const SizedBox(height: 32),
+                  _buildTopHeader(context, state, isMobile),
+                  const SizedBox(height: 16),
+                  _buildV3StatGrid(context, state, isMobile, isDesktop),
+                  const SizedBox(height: 16),
                   _buildAnalyticsSection(context, state, isMobile),
                 ],
               ),
@@ -58,206 +62,181 @@ class AdminOverviewPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, String subtitle) {
-    return Column(
+  // ---------------- Header (web-like) ----------------
+
+  Widget _buildTopHeader(BuildContext context, AdminDashboardState state, bool isMobile) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black)),
-        const SizedBox(height: 4),
-        Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500], fontWeight: FontWeight.w500)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Overview',
+                style: TextStyle(
+                  fontSize: isMobile ? 24 : 28,
+                  height: 1.05,
+                  fontWeight: FontWeight.w800,
+                  color: _text,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Welcome back! Here\'s what\'s happening today.',
+                style: TextStyle(
+                  fontSize: isMobile ? 14 : 15,
+                  color: _muted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!isMobile) ...[
+          const SizedBox(width: 12),
+          _PrimaryButton(
+            label: 'Download Report',
+            icon: Icons.download_rounded,
+            onTap: () {},
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildV3StatGrid(BuildContext context, AdminDashboardState state, bool isMobile) {
+  // ---------------- Stat Grid (web-like cards) ----------------
+
+  Widget _buildV3StatGrid(
+    BuildContext context,
+    AdminDashboardState state,
+    bool isMobile,
+    bool isDesktop,
+  ) {
     final stats = state.adminStatistics;
-    final width = MediaQuery.of(context).size.width;
-    
-    // Responsive column count: 2 for mobile, 4 for wide tablets/desktop
-    final crossAxisCount = width < 1100 ? 2 : 4;
-    
+
+    // Match web feel:
+    // - mobile/tablet: 2 columns
+    // - desktop: 4 columns
+    final crossAxisCount = isDesktop ? 4 : 2;
+
+    // More “web” aspect ratio (tighter height on desktop, slightly taller on mobile)
+    final childAspectRatio = isDesktop ? 1.55 : 1.28;
+
     return GridView.count(
       crossAxisCount: crossAxisCount,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: width < 1100 ? 1.15 : 1.3,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: childAspectRatio,
       children: [
-        _buildV3StatCard(
-          'Net Revenue', 
-          'NRs. ${stats?.totalRevenue.toInt() ?? 0}', 
-          Icons.attach_money_rounded, 
-          const Color(0xFF10B981), 
-          '+0.4% vs last month',
+        _WebStatCard(
+          title: 'Net Revenue',
+          value: 'NRs. ${stats?.totalRevenue.toInt() ?? 0}',
+          icon: Icons.attach_money_rounded,
+          iconBg: const Color(0xFFEFFDF5),
+          iconColor: const Color(0xFF16A34A),
+          deltaText: '+0.4% vs last month',
+          isPositive: true,
         ),
-        _buildV3StatCard(
-          'Unpaid Orders', 
-          '${state.orders.where((o) => o.status.name == "PENDING").length}', 
-          Icons.access_time_filled_rounded, 
-          const Color(0xFF3B82F6), 
-          '+100% of total orders',
+        _WebStatCard(
+          title: 'Unpaid Orders',
+          value: '${((stats?.totalOrders ?? 0) - (stats?.paidOrders ?? 0)).clamp(0, 1 << 31)}',
+          icon: Icons.info_outline_rounded,
+          iconBg: const Color(0xFFEFF6FF),
+          iconColor: const Color(0xFF2563EB),
+          deltaText: '+33% of total orders',
+          isPositive: false,
         ),
-        _buildV3StatCard(
-          'Paid Orders', 
-          '${state.orders.where((o) => o.status.name == "COMPLETED").length}', 
-          Icons.check_circle_rounded, 
-          const Color(0xFFF59E0B), 
-          '+0% paid vs total',
+        _WebStatCard(
+          title: 'Paid Orders',
+          value: '${stats?.paidOrders ?? 0}',
+          icon: Icons.check_circle_rounded,
+          iconBg: const Color(0xFFFFF7ED),
+          iconColor: const Color(0xFFF97316),
+          deltaText: '+67% paid vs total',
+          isPositive: true,
         ),
-        _buildV3StatCard(
-          'Occupied Tables', 
-          '2', // Placeholder as per mockup
-          Icons.grid_view_rounded, 
-          const Color(0xFF8B5CF6), 
-          '+17% of total tables',
+        _WebStatCard(
+          title: 'Occupied Tables',
+          value: '${stats?.occupiedTables ?? 0}',
+          icon: Icons.grid_view_rounded,
+          iconBg: const Color(0xFFF5F3FF),
+          iconColor: const Color(0xFF7C3AED),
+          deltaText: '+8% of total tables',
+          isPositive: true,
         ),
       ],
     );
   }
 
-  Widget _buildV3StatCard(String label, String value, IconData icon, Color color, String trend) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w600)),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: Colors.white, size: 18),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.north_east_rounded, color: color, size: 12),
-              const SizedBox(width: 4),
-              Text(trend, style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildV3StatusBadge(String status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFEBDD),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Text(
-        'PENDING',
-        style: TextStyle(color: Color(0xFFFF7D29), fontSize: 10, fontWeight: FontWeight.w900),
-      ),
-    );
-  }
+  // ---------------- Analytics (web-like containers) ----------------
 
   Widget _buildAnalyticsSection(BuildContext context, AdminDashboardState state, bool isMobile) {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width > 1100;
 
-    final overviewCard = Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+    final overviewCard = _FlatCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Sales Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F4F8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: const Row(
-                  children: [
-                    Text('Last 30 Days', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    SizedBox(width: 8),
-                    Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 250,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _SalesLineChartPainter(),
+          _SectionHeader(
+            title: 'Sales Overview',
+            subtitle: 'Revenue trend over the last ${state.adminStatistics?.days ?? 30} days',
+            trailing: _SoftDropdownChip(
+              label: 'Last ${state.adminStatistics?.days ?? 30} Days',
+              onTap: () {},
             ),
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: isMobile ? 240 : 260,
+            width: double.infinity,
+            child: _buildSalesLineChart(state.salesData),
           ),
         ],
       ),
     );
 
-    final categoryCard = Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+    final categoryCard = _FlatCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Sales by Category', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-              TextButton(
-                onPressed: () {},
-                child: const Row(
-                  children: [
-                    Text('View All', style: TextStyle(color: Color(0xFFFF7D29), fontWeight: FontWeight.bold)),
-                    Icon(Icons.chevron_right_rounded, color: Color(0xFFFF7D29), size: 18),
-                  ],
+          _SectionHeader(
+            title: 'Sales by Category',
+            subtitle: 'Distribution of revenue',
+            trailing: TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'View All →',
+                style: TextStyle(
+                  color: _brand,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
                 ),
               ),
-            ],
+            ),
           ),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text('Latest orders placed across the restaurant.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 18),
+          Center(
+            child: SizedBox(
+              height: isMobile ? 200 : 220,
+              child: _buildCategoryPieChart(state.categorySales),
+            ),
           ),
-          const SizedBox(height: 32),
-          Column(
-            children: [
-              Center(
-                child: SizedBox(
-                  height: 180,
-                  child: CustomPaint(
-                    size: const Size(180, 180),
-                    painter: _DonutChartPainter(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              _buildLegend(),
-            ],
-          ),
+          const SizedBox(height: 18),
+          _buildDynamicLegend(state.categorySales),
         ],
       ),
     );
@@ -267,7 +246,7 @@ class AdminOverviewPage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(flex: 3, child: overviewCard),
-          const SizedBox(width: 24),
+          const SizedBox(width: 14),
           Expanded(flex: 2, child: categoryCard),
         ],
       );
@@ -276,23 +255,563 @@ class AdminOverviewPage extends ConsumerWidget {
     return Column(
       children: [
         overviewCard,
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         categoryCard,
       ],
     );
   }
 
-  Widget _buildLegend() {
-    return const Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 16,
-      runSpacing: 12,
+  // ---------------- Charts (same logic; only UI polish) ----------------
+
+  Widget _buildSalesLineChart(List<SalesData> salesData) {
+    if (salesData.isEmpty) {
+      return const _EmptyState(
+        icon: Icons.show_chart_rounded,
+        title: 'No sales data',
+        message: 'No sales data available for this period.',
+      );
+    }
+
+    final maxY = salesData.map((e) => e.total).reduce((a, b) => a > b ? a : b);
+    final validMaxY = maxY > 0 ? (maxY * 1.2) : 100.0;
+
+    final List<FlSpot> spots = [];
+    for (int i = 0; i < salesData.length; i++) {
+      spots.add(FlSpot(i.toDouble(), salesData[i].total));
+    }
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (validMaxY / 4) > 0 ? validMaxY / 4 : 1,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: const Color(0xFFF0F2F5),
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 34,
+              interval: salesData.length > 7 ? (salesData.length / 5).ceilToDouble() : 1,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index < 0 || index >= salesData.length) return const SizedBox();
+
+                final dateStr = salesData[index].date;
+                final date = DateTime.tryParse(dateStr);
+                final label = date != null ? DateFormat('MMM d').format(date) : dateStr;
+
+                return SideTitleWidget(
+                  meta: meta,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: _muted2,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: (validMaxY / 4) > 0 ? validMaxY / 4 : 1,
+              reservedSize: 48,
+              getTitlesWidget: (value, meta) {
+                if (value == validMaxY || value == 0) return const SizedBox();
+                final text = value >= 1000
+                    ? '${(value / 1000).toStringAsFixed(1)}k'
+                    : value.toInt().toString();
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    text,
+                    style: const TextStyle(
+                      color: _muted2,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: 0,
+        maxX: (salesData.length - 1).toDouble() > 0 ? (salesData.length - 1).toDouble() : 1,
+        minY: 0,
+        maxY: validMaxY,
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: _brand,
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: _brand.withAlpha((0.10 * 255).toInt()),
+            ),
+          ),
+        ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (_) => const Color(0xFF111827),
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final date = salesData[spot.x.toInt()].date;
+                final parsed = DateTime.tryParse(date);
+                final formattedDate =
+                    parsed != null ? DateFormat('MMM d, yyyy').format(parsed) : date;
+
+                return LineTooltipItem(
+                  '$formattedDate\nSales : NRs. ${spot.y.toInt()}',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    height: 1.25,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryPieChart(List<CategorySalesData> categorySales) {
+    if (categorySales.isEmpty) {
+      return const _EmptyState(
+        icon: Icons.pie_chart_rounded,
+        title: 'No category data',
+        message: 'No category revenue available.',
+      );
+    }
+
+    final colors = [
+      const Color(0xFF2563EB), // Blue
+      const Color(0xFFF97316), // Orange
+      const Color(0xFF7C3AED), // Purple
+      const Color(0xFF16A34A), // Green
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFFF59E0B), // Amber
+    ];
+
+    final double total = categorySales.fold(0, (sum, item) => sum + item.value);
+
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        _LegendItem(color: Color(0xFF8B5CF6), label: 'Appetizers'),
-        _LegendItem(color: Color(0xFF3B82F6), label: 'Beverages'),
-        _LegendItem(color: Color(0xFFF59E0B), label: 'Desserts'),
-        _LegendItem(color: Color(0xFFFF7D29), label: 'Main Course'),
+        PieChart(
+          PieChartData(
+            pieTouchData: PieTouchData(enabled: true),
+            borderData: FlBorderData(show: false),
+            sectionsSpace: 4,
+            centerSpaceRadius: 60,
+            sections: categorySales.asMap().entries.map((entry) {
+              final index = entry.key;
+              final data = entry.value;
+              final percentage = total > 0 ? (data.value / total * 100) : 0;
+
+              return PieChartSectionData(
+                color: colors[index % colors.length],
+                value: data.value,
+                title: '${percentage.toStringAsFixed(1)}%',
+                radius: 22,
+                titleStyle: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.transparent, // keep clean (no arc labels)
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Total',
+              style: TextStyle(
+                color: _muted2,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'NRs. ${total.toInt()}',
+              style: const TextStyle(
+                color: _text,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        )
       ],
+    );
+  }
+
+  Widget _buildDynamicLegend(List<CategorySalesData> categorySales) {
+    if (categorySales.isEmpty) return const SizedBox();
+
+    final colors = [
+      const Color(0xFF2563EB),
+      const Color(0xFFF97316),
+      const Color(0xFF7C3AED),
+      const Color(0xFF16A34A),
+      const Color(0xFFEC4899),
+      const Color(0xFFF59E0B),
+    ];
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 12,
+      runSpacing: 12,
+      children: categorySales.asMap().entries.map((entry) {
+        return _LegendItem(
+          color: colors[entry.key % colors.length],
+          label: entry.value.name,
+          value: entry.value.value,
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ---------------- Web-like stat card ----------------
+
+class _WebStatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String deltaText;
+  final bool isPositive;
+
+  const _WebStatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.deltaText,
+    required this.isPositive,
+  });
+
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _text = Color(0xFF111827);
+  static const Color _muted = Color(0xFF6B7280);
+
+  @override
+  Widget build(BuildContext context) {
+    final deltaColor = isPositive ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _muted,
+                  ),
+                ),
+              ),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(14),                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 24,
+              height: 1.05,
+              fontWeight: FontWeight.w800,
+              color: _text,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              Icon(
+                isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                size: 16,
+                color: deltaColor,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  deltaText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: deltaColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------- Reusable UI widgets (flat web-like) ----------------
+
+class _FlatCard extends StatelessWidget {
+  final Widget child;
+  const _FlatCard({required this.child});
+
+  static const Color _border = Color(0xFFE5E7EB);
+  static const double _radius = 16;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_radius),
+        border: Border.all(color: _border),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  static const Color _text = Color(0xFF111827);
+  static const Color _muted = Color(0xFF6B7280);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w900,
+                  color: _text,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: _muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing,
+      ],
+    );
+  }
+}
+
+class _SoftDropdownChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _SoftDropdownChip({required this.label, required this.onTap});
+
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _muted = Color(0xFF6B7280);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: _muted,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: _muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool fullWidth;
+
+  const _PrimaryButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.fullWidth = false,
+  });
+
+  static const Color _brand = Color(0xFFFF7D29);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: fullWidth ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: _brand,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment: fullWidth ? MainAxisAlignment.center : MainAxisAlignment.start,
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: const Color(0xFF9CA3AF)),
+            const SizedBox(width: 10),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -300,129 +819,56 @@ class AdminOverviewPage extends ConsumerWidget {
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
-  const _LegendItem({required this.color, required this.label});
+  final double value;
+
+  const _LegendItem({required this.color, required this.label, required this.value});
+
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _muted = Color(0xFF6B7280);
+  static const Color _text = Color(0xFF111827);
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w600)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: _muted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'NRs. ${value.toInt()}',
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: _text,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
-}
-
-class _SalesLineChartPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = Colors.grey[100]!
-      ..strokeWidth = 1;
-
-    final axisTextStyle = TextStyle(color: Colors.grey[400]!, fontSize: 10, fontWeight: FontWeight.w500);
-    final textPainter = TextPainter(textDirection: ui.TextDirection.ltr);
-
-    // Draw horizontal grid lines and Y-axis labels
-    for (var i = 0; i <= 4; i++) {
-       final y = size.height - (i * size.height / 4) - 20;
-       canvas.drawLine(Offset(40, y), Offset(size.width, y), gridPaint);
-       
-       textPainter.text = TextSpan(text: 'Rs.$i', style: axisTextStyle);
-       textPainter.layout();
-       textPainter.paint(canvas, Offset(0, y - textPainter.height / 2));
-    }
-
-    // Draw line
-    final linePaint = Paint()
-      ..color = const Color(0xFFFF7D29)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    final points = [
-      Offset(40, size.height - 20),
-      Offset(size.width * 0.4, size.height - 20),
-      Offset(size.width * 0.55, size.height - 25), // Slight dip
-      Offset(size.width, size.height - 20),
-    ];
-
-    path.moveTo(points[0].dx, points[0].dy);
-    for (var i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    canvas.drawPath(path, linePaint);
-
-    // Draw point indicator
-    final activePoint = Offset(size.width * 0.55, size.height - 25);
-    canvas.drawCircle(activePoint, 5, Paint()..color = const Color(0xFFFF7D29));
-    canvas.drawCircle(activePoint, 3, Paint()..color = Colors.white);
-
-    // Draw Vertical interaction line
-    canvas.drawLine(Offset(activePoint.dx, 0), Offset(activePoint.dx, size.height - 20), gridPaint..color = Colors.grey[300]!);
-
-    // Draw Tooltip (Pseudo implementation)
-    final tooltipRect = Rect.fromLTWH(activePoint.dx - 40, 40, 80, 50);
-    canvas.drawRRect(RRect.fromRectAndRadius(tooltipRect, const Radius.circular(8)), Paint()..color = Colors.white..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4));
-    canvas.drawRRect(RRect.fromRectAndRadius(tooltipRect, const Radius.circular(8)), Paint()..color = Colors.white);
-    canvas.drawRRect(RRect.fromRectAndRadius(tooltipRect, const Radius.circular(8)), Paint()..color = Colors.grey[200]!..style = PaintingStyle.stroke);
-
-    textPainter.text = const TextSpan(text: 'Feb 18', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900));
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(activePoint.dx - 40 + 10, 45));
-
-    textPainter.text = const TextSpan(text: 'Sales: Nrs. 0', style: TextStyle(color: Color(0xFFFF7D29), fontSize: 10, fontWeight: FontWeight.bold));
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(activePoint.dx - 40 + 10, 62));
-
-    // Draw X-axis labels
-    final dates = ['Feb 1', 'Feb 5', 'Feb 9', 'Feb 13', 'Feb 17', 'Feb 21', 'Feb 25', 'Mar 1'];
-    for(var i = 0; i < dates.length; i++) {
-      final x = 40 + (i * (size.width - 40) / (dates.length - 1));
-      textPainter.text = TextSpan(text: dates[i], style: TextStyle(color: Colors.grey[400], fontSize: 9, fontWeight: FontWeight.w600));
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(x - textPainter.width/2, size.height - 10));
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
-class _DonutChartPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final strokeWidth = 18.0;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    // Draw segments with gaps for premium look
-    const gap = 0.2; // Radians
-    
-    // Appetizers (Purple)
-    paint.color = const Color(0xFF8B5CF6);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - strokeWidth), -1.5, 0.8 - gap, false, paint);
-
-    // Beverages (Blue)
-    paint.color = const Color(0xFF3B82F6);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - strokeWidth), -0.7, 1.8 - gap, false, paint);
-
-    // Desserts (Yellow/Amber)
-    paint.color = const Color(0xFFF59E0B);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - strokeWidth), 1.1, 1.3 - gap, false, paint);
-
-    // Main Course (Orange)
-    paint.color = const Color(0xFFFF7D29);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius - strokeWidth), 2.4, 2.4 - gap, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

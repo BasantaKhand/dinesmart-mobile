@@ -12,7 +12,7 @@ class GetStaffUseCase {
 class CreateStaffUseCase {
   final IStaffRepository repository;
   CreateStaffUseCase(this.repository);
-  Future<Either<Failure, StaffEntity>> call(StaffEntity staff) => repository.createStaff(staff);
+  Future<Either<Failure, ({StaffEntity staff, Map<String, dynamic>? credentials})>> call(StaffEntity staff) => repository.createStaff(staff);
 }
 
 class UpdateStaffUseCase {

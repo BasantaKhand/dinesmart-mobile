@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dinesmart_app/core/error/failure.dart';
 import 'package:dinesmart_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dinesmart_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final updatePasswordUsecaseProvider = Provider<UpdatePasswordUsecase>((ref) {
@@ -25,7 +26,7 @@ class UpdatePasswordUsecase {
   UpdatePasswordUsecase({required IAuthRepository repository})
       : _repository = repository;
 
-  Future<Either<Failure, bool>> call(UpdatePasswordParams params) async {
+  Future<Either<Failure, AuthEntity>> call(UpdatePasswordParams params) async {
     return await _repository.changePassword(
       params.currentPassword,
       params.newPassword,

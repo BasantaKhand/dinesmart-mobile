@@ -80,7 +80,7 @@ class AuthRemoteDatasource implements IRemoteAuthDatasource {
   }
 
   @override
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<AuthApiModel?> changePassword(String currentPassword, String newPassword) async {
     final response = await _apiClient.put(
       ApiEndpoints.updateProfile,
       data: {
@@ -88,7 +88,27 @@ class AuthRemoteDatasource implements IRemoteAuthDatasource {
         'newPassword': newPassword,
       },
     );
-    return response.data['success'] == true;
+
+    if (response.data['success'] == true) {
+      final data = response.data['data'] as Map<String, dynamic>;
+      final userData = data['user'] as Map<String, dynamic>;
+      final updatedUser = AuthApiModel.fromJson(userData);
+
+      // Update local session
+      await _userSessionService.saveUserSession(
+        userId: updatedUser.authId ?? '',
+        email: updatedUser.email,
+        fullName: updatedUser.ownerName,
+        username: updatedUser.username ?? updatedUser.email,
+        role: updatedUser.role ?? 'USER',
+        restaurantId: updatedUser.restaurantId,
+        phoneNumber: updatedUser.phoneNumber,
+        profilePicture: updatedUser.profilePicture,
+      );
+
+      return updatedUser;
+    }
+    return null;
   }
 
   @override
@@ -103,7 +123,8 @@ class AuthRemoteDatasource implements IRemoteAuthDatasource {
     );
 
     if (response.data['success'] == true) {
-      final userData = response.data['data'] as Map<String, dynamic>;
+      final data = response.data['data'] as Map<String, dynamic>;
+      final userData = data['user'] as Map<String, dynamic>;
       final updatedUser = AuthApiModel.fromJson(userData);
       
       // Update local session

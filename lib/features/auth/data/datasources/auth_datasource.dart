@@ -13,6 +13,6 @@ abstract interface class IRemoteAuthDatasource {
   Future<AuthApiModel?> login(String email, String password);
   Future<bool> logout();
   Future<AuthApiModel?> getUserByEmail(String email);
-  Future<bool> changePassword(String currentPassword, String newPassword);
+  Future<AuthApiModel?> changePassword(String currentPassword, String newPassword);
   Future<AuthApiModel?> updateProfile({String? ownerName, String? phoneNumber, String? profilePicture});
 }

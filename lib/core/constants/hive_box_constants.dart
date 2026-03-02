@@ -27,14 +27,34 @@ class HiveBoxConstants {
   static const int pendingOperationTypeId = 7;
   static const String pendingOperationBox = 'pending_operation_box';
 
+  static const int cashierDashboardTypeId = 8;
+  static const String cashierDashboardBox = 'cashier_dashboard_box';
+
+  // Admin Dashboard cache (JSON string box)
+  static const String adminDashboardBox = 'admin_dashboard_box';
+
+  // Staff Management cache (JSON string box)
+  static const String staffBox = 'staff_box';
+
+  // Notifications cache (JSON string box)
+  static const String notificationsBox = 'notifications_box';
+
   static const String cacheTimestampBox = 'cache_timestamp_box';
 
   static const String categoryCacheKey = 'categories_last_updated';
   static const String menuItemsCacheKey = 'menu_items_last_updated';
   static const String tablesCacheKey = 'tables_last_updated';
   static const String ordersCacheKey = 'orders_last_updated';
+  static const String cashierDashboardCacheKey = 'cashier_dashboard_last_updated';
+  static const String adminDashboardCacheKey = 'admin_dashboard_last_updated';
+  static const String staffCacheKey = 'staff_last_updated';
+  static const String notificationsCacheKey = 'notifications_last_updated';
 
   static const Duration cacheValidDuration = Duration(hours: 24);
   static const Duration tableCacheValidDuration = Duration(minutes: 5);
   static const Duration orderCacheValidDuration = Duration(minutes: 2);
+  static const Duration cashierDashboardCacheValidDuration = Duration(minutes: 2);
+  static const Duration adminDashboardCacheValidDuration = Duration(minutes: 5);
+  static const Duration staffCacheValidDuration = Duration(minutes: 10);
+  static const Duration notificationsCacheValidDuration = Duration(minutes: 3);
 }

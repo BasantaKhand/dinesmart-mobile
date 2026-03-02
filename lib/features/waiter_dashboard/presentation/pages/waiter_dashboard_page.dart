@@ -11,8 +11,7 @@ import '../widgets/bill_summary_sheet.dart';
 import '../../../auth/presentation/widgets/user_profile_drop_down.dart';
 import '../../domain/entities/menu_item_entity.dart';
 import 'package:dinesmart_app/app/theme/app_colors.dart';
-import '../../../notifications/presentation/view_model/notification_view_model.dart';
-import 'package:dinesmart_app/features/notifications/presentation/pages/notifications_page.dart';
+import '../../../notifications/presentation/widgets/notification_badge.dart';
 import 'package:shake/shake.dart';
 import '../../../auth/presentation/view_model/auth_viewmodel.dart';
 import '../../../onboarding/presentation/pages/onboarding_page.dart';
@@ -107,7 +106,7 @@ class _WaiterDashboardPageState extends ConsumerState<WaiterDashboardPage> {
           ],
         ),
         actions: [
-          _NotificationBadge(),
+          const NotificationBadge(),
           const UserProfileDropDown(),
           const SizedBox(width: 8),
         ],
@@ -665,64 +664,6 @@ class _MinimalOption extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _NotificationBadge extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_NotificationBadge> createState() => _NotificationBadgeState();
-}
-
-class _NotificationBadgeState extends ConsumerState<_NotificationBadge> {
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      ref.read(notificationViewModelProvider.notifier).loadNotifications();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final notificationState = ref.watch(notificationViewModelProvider);
-    final unreadCount = notificationState.unreadCount;
-
-    return IconButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const NotificationsPage()),
-        );
-      },
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          const Icon(Icons.notifications_outlined, color: Colors.black87, size: 26),
-          if (unreadCount > 0)
-            Positioned(
-              right: -6,
-              top: -4,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.orange,
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                child: Text(
-                  unreadCount > 99 ? '99+' : unreadCount.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

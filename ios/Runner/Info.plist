@@ -45,5 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- 🔐 Biometric Authentication Permissions -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>We need Face ID to securely authenticate your password change request</string>
+	<key>NSBiometricsUsageDescription</key>
+	<string>We use biometric authentication to protect your account and secure sensitive operations</string>
 </dict>
 </plist>

@@ -67,6 +67,23 @@ class NotificationApiModel {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'restaurantId': restaurantId,
+      'type': type,
+      'recipients': recipients,
+      'title': title,
+      'message': message,
+      'data': data,
+      'status': status,
+      'actionUrl': actionUrl,
+      'priority': priority,
+      'createdAt': createdAt.toIso8601String(),
+      'expiresAt': expiresAt?.toIso8601String(),
+    };
+  }
+
   NotificationStatus _parseStatus(String status) {
     switch (status.toUpperCase()) {
       case 'READ':

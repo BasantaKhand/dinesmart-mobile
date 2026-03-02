@@ -72,6 +72,10 @@ dependencies:
   shake: ^3.0.0
   fl_chart: ^0.71.0
 
+  # 🔐 Biometric & Sensors (NEW)
+  local_auth: ^2.1.1
+  sensors_plus: ^6.1.2
+
 
 
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:dinesmart_app/app/theme/app_colors.dart';
 import 'package:dinesmart_app/core/utils/snackbar_utils.dart';
 import 'package:dinesmart_app/features/cashier_dashboard/domain/entities/cashier_entities.dart';
 import 'package:dinesmart_app/features/cashier_dashboard/presentation/view_model/cashier_dashboard_view_model.dart';
-import 'package:dinesmart_app/features/cashier_dashboard/presentation/state/cashier_dashboard_state.dart';
 
 class SettlementPage extends ConsumerStatefulWidget {
   final PaymentQueueItem item;
@@ -17,7 +17,7 @@ class SettlementPage extends ConsumerStatefulWidget {
 
 class _SettlementPageState extends ConsumerState<SettlementPage> {
   final _transactionController = TextEditingController();
-  final String _paymentMethod = 'QR';
+  String _paymentMethod = 'CASH';
 
   @override
   void dispose() {
@@ -30,44 +30,34 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
         .read(cashierDashboardViewModelProvider.notifier)
         .markOrderPaid(
           widget.item.orderId,
-          transactionId: _transactionController.text,
+          transactionId: _transactionController.text.isNotEmpty ? _transactionController.text : null,
           paymentMethod: _paymentMethod,
         );
 
-    if (ref.read(cashierDashboardViewModelProvider).errorMessage == null &&
-        mounted) {
+    final vmState = ref.read(cashierDashboardViewModelProvider);
+    if (vmState.errorMessage == null && mounted) {
       SnackbarUtils.showSuccess(context, 'Payment settled successfully');
       Navigator.pop(context);
     } else {
       if (mounted) {
-        SnackbarUtils.showError(
-          context,
-          ref.read(cashierDashboardViewModelProvider).errorMessage!,
-        );
+        SnackbarUtils.showError(context, vmState.errorMessage ?? 'Error');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading =
-        ref.watch(cashierDashboardViewModelProvider).status ==
-        CashierDashboardStatus.loading;
+    final isLoading = ref.watch(cashierDashboardViewModelProvider).isSettling;
+    final dateStr = DateFormat('M/d/yyyy').format(DateTime.now());
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Settlement',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Settlement', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -76,39 +66,94 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInvoiceHeader(),
+            _buildInvoiceHeader(dateStr),
             const SizedBox(height: 24),
             _buildBilledToCard(),
             const SizedBox(height: 24),
-            const Text(
-              'ORDER ITEMS',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
+
+            // Order Items
+            const Text('ORDER ITEMS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey)),
             const SizedBox(height: 12),
             _buildOrderItemsList(),
             const SizedBox(height: 24),
-            const Text(
-              'Notes',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+
+            // Notes
+            const Text('Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
-            Text(
-              'Please confirm payment before closing the table.',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            Text('Please confirm payment before closing the table.', style: TextStyle(color: Colors.grey[600])),
+
             const SizedBox(height: 32),
             _buildBillSummary(),
+
+            // Payment Method Toggle
             const SizedBox(height: 32),
-            if (_paymentMethod == 'QR') _buildQRCodeSection(),
-            const SizedBox(height: 32),
+            _buildPaymentMethodToggle(),
+
+            // QR code if QR selected
+            if (_paymentMethod == 'QR') ...[
+              const SizedBox(height: 24),
+              _buildQRCodeSection(),
+            ],
+
+            const SizedBox(height: 24),
             _buildTransactionInput(),
             const SizedBox(height: 40),
             _buildActionButtons(isLoading),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              _buildMethodTab('CASH', Icons.money),
+              _buildMethodTab('QR', Icons.qr_code),
+              _buildMethodTab('CARD', Icons.credit_card),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMethodTab(String method, IconData icon) {
+    final isSelected = _paymentMethod == method;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _paymentMethod = method),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.grey[600]),
+              const SizedBox(width: 6),
+              Text(
+                method,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -129,14 +174,7 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
               Expanded(flex: 4, child: Text('ITEM', style: _labelStyle)),
               Expanded(flex: 1, child: Text('QTY', style: _labelStyle)),
               Expanded(flex: 2, child: Text('PRICE', style: _labelStyle)),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'TOTAL',
-                  style: _labelStyle,
-                  textAlign: TextAlign.end,
-                ),
-              ),
+              Expanded(flex: 2, child: Text('TOTAL', style: _labelStyle, textAlign: TextAlign.end)),
             ],
           ),
           const Divider(height: 24),
@@ -150,18 +188,9 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          item.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                         if (item.notes != null && item.notes!.isNotEmpty)
-                          Text(
-                            item.notes!,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 10,
-                            ),
-                          ),
+                          Text(item.notes!, style: TextStyle(color: Colors.grey[500], fontSize: 10)),
                       ],
                     ),
                   ),
@@ -182,76 +211,45 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
           if (widget.item.items.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Text(
-                'No items found',
-                style: TextStyle(color: Colors.grey[400]),
-              ),
+              child: Text('No items found', style: TextStyle(color: Colors.grey[400])),
             ),
         ],
       ),
     );
   }
 
-  static const _labelStyle = TextStyle(
-    color: Colors.grey,
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.5,
-  );
+  static const _labelStyle = TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5);
 
-  Widget _buildInvoiceHeader() {
+  Widget _buildInvoiceHeader(String dateStr) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Text('INVOICE', style: TextStyle(color: Colors.grey[400], letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 12)),
             Text(
-              'INVOICE',
-              style: TextStyle(
-                color: Colors.grey[400],
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              'Invoice #ORD-${widget.item.orderId.substring(widget.item.orderId.length - 6).toUpperCase()}',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+              widget.item.orderNumber.isNotEmpty
+                  ? 'Invoice #${widget.item.orderNumber}'
+                  : 'Invoice #ORD-${widget.item.orderId.substring(widget.item.orderId.length - 6).toUpperCase()}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Active Restaurant',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        Text('Payment Receipt', style: TextStyle(color: Colors.grey[500])),
+        const Text('Payment Receipt', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text('Settle this bill', style: TextStyle(color: Colors.grey[500])),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text(
-              'Date: 2/24/2026',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
+            Text('Date: $dateStr', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
           ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text(
-              'Table: T-${widget.item.tableNumber}',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Table: T-${widget.item.tableNumber}', style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
       ],
@@ -272,23 +270,10 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'BILLED TO',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text('BILLED TO', style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                const Text(
-                  'Walk-in Guest',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Order items as listed',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                ),
+                const Text('Walk-in Guest', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Order items as listed', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
               ],
             ),
           ),
@@ -305,26 +290,10 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'PAYMENT',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text('PAYMENT', style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                const Text(
-                  'Pending',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-                Text(
-                  'Method: $_paymentMethod',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                ),
+                const Text('Pending', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                Text('Method: $_paymentMethod', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
               ],
             ),
           ),
@@ -334,8 +303,8 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
   }
 
   Widget _buildBillSummary() {
-    final subtotal = widget.item.amount / 1.13;
-    final tax = widget.item.amount - subtotal;
+    final subtotal = widget.item.subtotal > 0 ? widget.item.subtotal : widget.item.amount / 1.13;
+    final tax = widget.item.tax > 0 ? widget.item.tax : widget.item.amount - subtotal;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -350,11 +319,7 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
           const SizedBox(height: 12),
           _buildSummaryRow('VAT (13%)', 'NRs. ${tax.toInt()}'),
           const Divider(height: 32),
-          _buildSummaryRow(
-            'Total',
-            'NRs. ${widget.item.amount.toInt()}',
-            isTotal: true,
-          ),
+          _buildSummaryRow('Total', 'NRs. ${widget.item.amount.toInt()}', isTotal: true),
         ],
       ),
     );
@@ -364,21 +329,8 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isTotal ? 20 : 16,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: isTotal ? 22 : 16,
-            fontWeight: FontWeight.bold,
-            color: isTotal ? AppColors.primary : Colors.black,
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: isTotal ? 20 : 16, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+        Text(value, style: TextStyle(fontSize: isTotal ? 22 : 16, fontWeight: FontWeight.bold, color: isTotal ? AppColors.primary : Colors.black)),
       ],
     );
   }
@@ -391,13 +343,7 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.grey[200]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           children: [
@@ -408,22 +354,12 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
                 width: 200,
                 height: 200,
                 color: Colors.grey[100],
-                child: const Icon(
-                  Icons.qr_code_2,
-                  size: 100,
-                  color: Colors.grey,
-                ),
+                child: const Icon(Icons.qr_code_2, size: 100, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Scan to pay via ESEWA',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-            Text(
-              'Restaurant Dinesmart • 97862766652',
-              style: TextStyle(color: Colors.grey[500], fontSize: 12),
-            ),
+            const Text('Scan to pay via ESEWA', style: TextStyle(fontWeight: FontWeight.w500)),
+            Text('Restaurant Dinesmart • 97862766652', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
           ],
         ),
       ),
@@ -434,10 +370,7 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Transaction ID',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
+        const Text('Transaction ID', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 8),
         TextField(
           controller: _transactionController,
@@ -446,21 +379,12 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
             filled: true,
             fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          'Optional for manual verification if webhook is not enabled.',
-          style: TextStyle(color: Colors.grey[400], fontSize: 11),
-        ),
+        Text('Optional for manual verification.', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
       ],
     );
   }
@@ -470,23 +394,13 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () {
-              // Print logic
-            },
+            onPressed: () {},
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               side: BorderSide(color: Colors.grey[300]!),
             ),
-            child: const Text(
-              'Print Bill',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: const Text('Print Bill', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(width: 16),
@@ -498,28 +412,16 @@ class _SettlementPageState extends ConsumerState<SettlementPage> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                 : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.check_circle_outline, size: 20),
                       SizedBox(width: 8),
-                      Text(
-                        'Mark Paid',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      Text('Mark Paid', style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
           ),

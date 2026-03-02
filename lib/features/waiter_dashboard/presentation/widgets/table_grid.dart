@@ -16,7 +16,7 @@ class TableGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 116,
+      height: 130,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -33,7 +33,6 @@ class TableGrid extends StatelessWidget {
               child: Stack(
                 children: [
                   Container(
-                    height: double.infinity,
                     margin: const EdgeInsets.only(right: 12),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -52,6 +51,7 @@ class TableGrid extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -80,7 +80,8 @@ class TableGrid extends StatelessWidget {
                         const SizedBox(height: 2),
                         const Text(
                           'Serving guests',
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

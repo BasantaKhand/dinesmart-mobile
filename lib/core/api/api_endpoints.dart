@@ -2,8 +2,9 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL - change this for production
-  static const String baseUrl = 'http://192.168.1.5:5000/api';
+  // static const String baseUrl = 'http://10.0.2.2:5001/api';
   // static const String baseUrl = 'http://localhost:5001/api';
+  static const String baseUrl = 'http://192.168.101.7:5001/api';
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -27,7 +28,15 @@ class ApiEndpoints {
   static const String paymentQueue = '/payment-queue';
   static const String paymentQueueStatus = '/payment-queue/status';
   static const String cashDrawerStatus = '/cash-drawer/status';
+  static const String cashDrawerOpen = '/cash-drawer/open';
+  static const String cashDrawerClose = '/cash-drawer/close';
   static const String cashDrawerHistory = '/cash-drawer/history';
+
+  // ============ Audit / Settlement Endpoints ============
+  static const String auditTransactions = '/audit/transactions';
+  static const String auditMyTransactions = '/audit/my-transactions';
+  static const String auditDailySettlement = '/audit/daily-settlement';
+  static const String auditSettlements = '/audit/settlements';
 
   // ============ Staff Endpoints ============
   static const String staff = '/staff';

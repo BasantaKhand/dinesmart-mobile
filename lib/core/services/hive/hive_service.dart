@@ -60,6 +60,10 @@ class HiveService {
     await Hive.openBox<OrderHiveModel>(HiveBoxConstants.orderBox);
     await Hive.openBox<OrderHiveModel>(HiveBoxConstants.activeOrderBox);
     await Hive.openBox<PendingOperationHiveModel>(HiveBoxConstants.pendingOperationBox);
+    await Hive.openBox<String>(HiveBoxConstants.cashierDashboardBox);
+    await Hive.openBox<String>(HiveBoxConstants.adminDashboardBox);
+    await Hive.openBox<String>(HiveBoxConstants.staffBox);
+    await Hive.openBox<String>(HiveBoxConstants.notificationsBox);
     await Hive.openBox<DateTime>(HiveBoxConstants.cacheTimestampBox);
   }
 
@@ -76,6 +80,10 @@ class HiveService {
     await Hive.box<OrderHiveModel>(HiveBoxConstants.orderBox).clear();
     await Hive.box<OrderHiveModel>(HiveBoxConstants.activeOrderBox).clear();
     await Hive.box<PendingOperationHiveModel>(HiveBoxConstants.pendingOperationBox).clear();
+    await Hive.box<String>(HiveBoxConstants.cashierDashboardBox).clear();
+    await Hive.box<String>(HiveBoxConstants.adminDashboardBox).clear();
+    await Hive.box<String>(HiveBoxConstants.staffBox).clear();
+    await Hive.box<String>(HiveBoxConstants.notificationsBox).clear();
     await Hive.box<DateTime>(HiveBoxConstants.cacheTimestampBox).clear();
   }
 
@@ -87,6 +95,10 @@ class HiveService {
   Box<OrderHiveModel> get orderBox => Hive.box<OrderHiveModel>(HiveBoxConstants.orderBox);
   Box<OrderHiveModel> get activeOrderBox => Hive.box<OrderHiveModel>(HiveBoxConstants.activeOrderBox);
   Box<PendingOperationHiveModel> get pendingOperationBox => Hive.box<PendingOperationHiveModel>(HiveBoxConstants.pendingOperationBox);
+  Box<String> get cashierDashboardBox => Hive.box<String>(HiveBoxConstants.cashierDashboardBox);
+  Box<String> get adminDashboardBox => Hive.box<String>(HiveBoxConstants.adminDashboardBox);
+  Box<String> get staffBox => Hive.box<String>(HiveBoxConstants.staffBox);
+  Box<String> get notificationsBox => Hive.box<String>(HiveBoxConstants.notificationsBox);
   Box<DateTime> get cacheTimestampBox => Hive.box<DateTime>(HiveBoxConstants.cacheTimestampBox);
 
   bool isCacheValid(String cacheKey, {Duration? validDuration}) {

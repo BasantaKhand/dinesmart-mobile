@@ -15,3 +15,13 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 # restaurant
+
+Test commands
+# Run tests + generate coverage
+flutter test --coverage
+
+# Overall summary
+lcov --summary coverage/lcov.info
+
+# Per-file breakdown
+lcov --list coverage/lcov.info

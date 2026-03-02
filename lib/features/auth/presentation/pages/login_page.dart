@@ -3,6 +3,7 @@ import 'package:dinesmart_app/app/theme/app_colors.dart';
 import 'package:dinesmart_app/core/utils/snackbar_utils.dart';
 import 'package:dinesmart_app/core/widgets/button_widget.dart';
 import 'package:dinesmart_app/features/auth/presentation/pages/change_password_page.dart';
+import 'package:dinesmart_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:dinesmart_app/features/auth/presentation/pages/signup_page.dart';
 import 'package:dinesmart_app/features/auth/presentation/state/auth_state.dart';
 import 'package:dinesmart_app/features/auth/presentation/view_model/auth_viewmodel.dart';
@@ -30,6 +31,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _navigateToSignUp() {
     AppRoutes.push(context, const SignupPage());
+  }
+
+  void _navigateToForgotPassword() {
+    AppRoutes.push(context, const ForgotPasswordPage());
   }
 
   Future<void> _handleLogin() async {
@@ -250,7 +255,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                             const Spacer(),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: _navigateToForgotPassword,
                               style: TextButton.styleFrom(
                                 foregroundColor: AppColors.primary,
                                 overlayColor: AppColors.primary.withAlpha(10),

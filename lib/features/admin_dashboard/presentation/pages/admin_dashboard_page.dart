@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dinesmart_app/core/sensors/accelerometer_service.dart';
+import 'package:dinesmart_app/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:dinesmart_app/features/auth/presentation/pages/login_page.dart';
+import 'package:dinesmart_app/app/routes/app_routes.dart';
 import 'admin_tables_page.dart';
 import 'admin_menu_items_page.dart';
 import 'admin_categories_page.dart';
@@ -7,6 +11,7 @@ import 'admin_orders_page.dart';
 import 'admin_staff_page.dart';
 import 'admin_overview_page.dart';
 import '../../../auth/presentation/widgets/user_profile_drop_down.dart';
+import '../../../notifications/presentation/widgets/notification_badge.dart';
 
 enum AdminModule { dashboard, menuItems, categories, orders, staff, tables }
 
@@ -14,11 +19,83 @@ final adminModuleProvider = StateProvider<AdminModule>(
   (ref) => AdminModule.dashboard,
 );
 
-class AdminDashboardPage extends ConsumerWidget {
+class AdminDashboardPage extends ConsumerStatefulWidget {
   const AdminDashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
+
+class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
+  late AccelerometerService _accelerometerService;
+
+  @override
+  void initState() {
+    super.initState();
+    _accelerometerService = AccelerometerService();
+    _initializeAccelerometerMonitoring();
+  }
+
+  /// Initialize accelerometer for logout detection
+  void _initializeAccelerometerMonitoring() {
+    _accelerometerService.startMonitoring(
+      onShakeDetected: _handleShakeLogout,
+      threshold: 50.0,
+    );
+    print('🔴 [ADMIN] Accelerometer monitoring enabled - rotate or shake device to logout');
+  }
+
+  /// Handle logout when shake is detected
+  Future<void> _handleShakeLogout() async {
+    print('🚨 [ADMIN] SHAKE DETECTED - Device motion detected!');
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ Device Motion Detected', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Are you sure you want to logout?\n\n'
+          'Your device movement was detected. This may indicate an unauthorized access attempt.',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              print('✅ [ADMIN] User cancelled logout - resumed session');
+            },
+            child: const Text('Cancel', style: TextStyle(color: Colors.blue, fontSize: 16)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _performLogout();
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Perform logout
+  void _performLogout() {
+    _accelerometerService.stopMonitoring();
+    ref.read(authViewModelProvider.notifier).logout();
+    AppRoutes.pushAndRemoveUntil(context, const LoginPage());
+  }
+
+  @override
+  void dispose() {
+    _accelerometerService.stopMonitoring();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedModule = ref.watch(adminModuleProvider);
     final isMobile = MediaQuery.of(context).size.width < 900;
 
@@ -39,7 +116,7 @@ class AdminDashboardPage extends ConsumerWidget {
               errorBuilder: (c, e, s) =>
                   const Icon(Icons.restaurant, color: Colors.orange),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 4),
             const Text(
               'DineSmart',
               style: TextStyle(
@@ -49,7 +126,7 @@ class AdminDashboardPage extends ConsumerWidget {
             ),
           ],
         ),
-        actions: const [UserProfileDropDown(), SizedBox(width: 8)],
+        actions: const [NotificationBadge(), UserProfileDropDown(), SizedBox(width: 8)],
       ),
 
       // No drawer/menu-drawer code

@@ -588,6 +588,10 @@ class _AdminTablesPageState extends ConsumerState<AdminTablesPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 700;
+        final padding = isMobile ? 16.0 : 24.0; // More padding on tablets/web
+        
         return FractionallySizedBox(
           widthFactor: 1,
           child: Padding(
@@ -595,7 +599,7 @@ class _AdminTablesPageState extends ConsumerState<AdminTablesPage> {
               bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+              padding: EdgeInsets.fromLTRB(padding, 0, padding, 20),
               child: StatefulBuilder(
                 builder: (context, setState) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -666,10 +670,11 @@ class _AdminTablesPageState extends ConsumerState<AdminTablesPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    Row(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
+                        SizedBox(
+                          width: double.infinity,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -682,8 +687,9 @@ class _AdminTablesPageState extends ConsumerState<AdminTablesPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

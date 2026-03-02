@@ -44,6 +44,17 @@ class AdminStatisticsModel {
         tablesTotal: tablesTotal,
         occupiedTables: occupiedTables,
       );
+
+  Map<String, dynamic> toJson() => {
+        'days': days,
+        'totalRevenue': totalRevenue,
+        'totalOrders': totalOrders,
+        'paidOrders': paidOrders,
+        'productsCount': productsCount,
+        'customersCount': customersCount,
+        'tablesTotal': tablesTotal,
+        'occupiedTables': occupiedTables,
+      };
 }
 
 class SalesDataModel {
@@ -60,6 +71,8 @@ class SalesDataModel {
   }
 
   SalesData toEntity() => SalesData(date: date, total: total);
+
+  Map<String, dynamic> toJson() => {'date': date, 'total': total};
 }
 
 class CategorySalesDataModel {
@@ -76,4 +89,6 @@ class CategorySalesDataModel {
   }
 
   CategorySalesData toEntity() => CategorySalesData(name: name, value: value);
+
+  Map<String, dynamic> toJson() => {'name': name, 'value': value};
 }

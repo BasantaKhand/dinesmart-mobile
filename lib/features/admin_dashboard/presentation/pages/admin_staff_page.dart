@@ -26,6 +26,14 @@ class _AdminStaffPageState extends ConsumerState<AdminStaffPage> {
   static const Color _brand = Color(0xFFFF7D29);
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(staffViewModelProvider.notifier).getStaff();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(staffViewModelProvider);
 
@@ -59,7 +67,11 @@ class _AdminStaffPageState extends ConsumerState<AdminStaffPage> {
                     horizontal: isMobile ? 12 : 28,
                     vertical: isMobile ? 12 : 18,
                   ),
-                  child: _buildStaffList(context, state),
+                  child: RefreshIndicator(
+                    color: _brand,
+                    onRefresh: () => ref.read(staffViewModelProvider.notifier).getStaff(),
+                    child: _buildStaffList(context, state),
+                  ),
                 ),
               ),
             ],
@@ -350,6 +362,71 @@ class _AdminStaffPageState extends ConsumerState<AdminStaffPage> {
       return const Center(child: CircularProgressIndicator(color: _brand));
     }
 
+    if (state.status == StaffStatusState.error && state.staffList.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Center(
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _border),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 62,
+                      color: Colors.red[300],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Failed to load staff',
+                      style: TextStyle(
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      state.errorMessage ?? 'Something went wrong.',
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => ref.read(staffViewModelProvider.notifier).getStaff(),
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _brand,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     var staff = state.filteredStaffList;
 
     if (_roleFilter != null) {
@@ -360,44 +437,66 @@ class _AdminStaffPageState extends ConsumerState<AdminStaffPage> {
     }
 
     if (staff.isEmpty) {
-      return Center(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _border),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.people_outline_rounded,
-                size: 62,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'No staff members found',
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Center(
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _border),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.people_outline_rounded,
+                      size: 62,
+                      color: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'No staff members found',
+                      style: TextStyle(
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Try adjusting search or filters.',
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => ref.read(staffViewModelProvider.notifier).getStaff(),
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('Refresh'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _brand,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Try adjusting search or filters.',
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
@@ -603,168 +702,181 @@ class _AdminStaffPageState extends ConsumerState<AdminStaffPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       builder: (ctx) {
-        return FractionallySizedBox(
-          widthFactor: 1, // ✅ full width on web/desktop
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF16A34A).withAlpha(25),
-                          borderRadius: BorderRadius.circular(12),
+        final screenWidth = MediaQuery.of(ctx).size.width;
+        final isMobile = screenWidth < 700;
+        // On tablet, cap width to 500px for better UX (like mobile)
+        final maxWidth = isMobile ? double.infinity : 500.0;
+        final padding = isMobile ? 16.0 : 16.0; // Same padding for all (tight fit)
+        
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: FractionallySizedBox(
+              widthFactor: 1,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(padding, 0, padding, 24),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.check_circle_rounded,
-                          color: Color(0xFF16A34A),
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
+                        const SizedBox(height: 20),
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Staff Created!',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: _text,
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF16A34A).withAlpha(25),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF16A34A),
+                                size: 22,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Share these temporary credentials with the new staff member.',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w600,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Staff Created!',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      color: _text,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Share these temporary credentials with the new staff member.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  _credentialRow(context, 'Email', email),
-                  const SizedBox(height: 12),
-                  _credentialRow(context, 'Password', password),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withAlpha(18),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFF59E0B).withAlpha(60),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          color: Color(0xFFF59E0B),
-                          size: 18,
+                        const SizedBox(height: 24),
+                        _credentialRow(context, 'Email', email),
+                        const SizedBox(height: 12),
+                        _credentialRow(context, 'Password', password),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withAlpha(18),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(0xFFF59E0B).withAlpha(60),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Color(0xFFF59E0B),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'The staff member must change their password on first login.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.amber[800],
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            'The staff member must change their password on first login.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.amber[800],
-                              fontWeight: FontWeight.w700,
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text: 'Email: $email\nPassword: $password',
+                                ),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Credentials copied!'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.copy_rounded, size: 16),
+                            label: const Text(
+                              'Copy All',
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _text,
+                              side: BorderSide(color: _text.withAlpha(25)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              ref
+                                  .read(staffViewModelProvider.notifier)
+                                  .clearCredentials();
+                              Navigator.pop(ctx);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _brand,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text(
+                              'Done',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Clipboard.setData(
-                              ClipboardData(
-                                text: 'Email: $email\nPassword: $password',
-                              ),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Credentials copied!'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.copy_rounded, size: 16),
-                          label: const Text(
-                            'Copy All',
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _text,
-                            side: BorderSide(color: _text.withAlpha(25)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ref
-                                .read(staffViewModelProvider.notifier)
-                                .clearCredentials();
-                            Navigator.pop(ctx);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _brand,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text(
-                            'Done',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -895,7 +1007,6 @@ class _AddEditStaffSheetState extends ConsumerState<AddEditStaffSheet> {
   late StaffRole _selectedRole;
   late StaffStatus _selectedStatus;
 
-  static const Color _border = Color(0xFFE5E7EB);
   static const Color _text = Color(0xFF111827);
   static const Color _brand = Color(0xFFFF7D29);
 

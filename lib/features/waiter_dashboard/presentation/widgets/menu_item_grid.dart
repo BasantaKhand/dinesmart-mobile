@@ -14,15 +14,38 @@ class MenuItemGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
+    final int crossCount;
+    final double aspectRatio;
+    final double spacing;
+    if (screenWidth >= 1100) {
+      crossCount = 4;
+      aspectRatio = 0.72;
+      spacing = 20;
+    } else if (screenWidth >= 900) {
+      crossCount = 3;
+      aspectRatio = 0.72;
+      spacing = 20;
+    } else if (screenWidth >= 600) {
+      crossCount = 3;
+      aspectRatio = 0.70;
+      spacing = 18;
+    } else {
+      crossCount = 2;
+      aspectRatio = 0.75;
+      spacing = 16;
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossCount,
+        childAspectRatio: aspectRatio,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -49,6 +72,7 @@ class MenuItemGrid extends StatelessWidget {
                           child: CachedNetworkImage(
                             imageUrl: item.image ?? '',
                             width: double.infinity,
+                            height: double.infinity,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: Colors.grey[100],
@@ -79,30 +103,30 @@ class MenuItemGrid extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(isTablet ? 14 : 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           item.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: isTablet ? 17 : 16),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           item.description ?? '',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                          style: TextStyle(color: Colors.grey[600], fontSize: isTablet ? 14 : 14),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: isTablet ? 12 : 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'NRs. ${item.price.toInt()}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: isTablet ? 17 : 15),
                             ),
                             GestureDetector(
                               onTap: () => onItemAdded(item),

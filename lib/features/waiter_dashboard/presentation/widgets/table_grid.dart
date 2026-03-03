@@ -15,8 +15,13 @@ class TableGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
+    final double cardWidth = isTablet ? 200.0 : 140.0;
+    final double listHeight = isTablet ? 170.0 : 130.0;
+
     return SizedBox(
-      height: 130,
+      height: listHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -29,7 +34,7 @@ class TableGrid extends StatelessWidget {
           return GestureDetector(
             onTap: () => onTableSelected(table),
             child: SizedBox(
-              width: 140,
+              width: cardWidth,
               child: Stack(
                 children: [
                   Container(
@@ -57,30 +62,34 @@ class TableGrid extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: EdgeInsets.all(isTablet ? 12 : 8),
                               decoration: BoxDecoration(
                                 color: isOccupied ? Colors.blue : Colors.purple,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
                               ),
                               child: Text(
-                                ' ${table.number} ',
-                                style: const TextStyle(
+                                'T-${table.number}',
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
+                                  fontSize: isTablet ? 18 : 14,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: isTablet ? 10 : 6),
                         Text(
                           'Table T-${table.number}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isTablet ? 16 : 14,
+                          ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           'Serving guests',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                          style: TextStyle(color: Colors.grey, fontSize: isTablet ? 13 : 12),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -90,6 +99,32 @@ class TableGrid extends StatelessWidget {
                     top: 8,
                     right: 20,
                     child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 10 : 6,
+                        vertical: isTablet ? 4 : 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isOccupied ? Colors.red[50] : Colors.green[50],
+                        borderRadius: BorderRadius.circular(isTablet ? 10 : 6),
+                        border: Border.all(
+                          color: isOccupied ? Colors.red[200]! : Colors.green[200]!,
+                        ),
+                      ),
+                      child: Text(
+                        isOccupied ? 'OCCUPIED' : 'AVAILABLE',
+                        style: TextStyle(
+                          color: isOccupied ? Colors.red : Colors.green,
+                          fontSize: isTablet ? 11 : 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Close/check icon below the badge
+                  Positioned(
+                    bottom: isTablet ? 50 : 40,
+                    left: isTablet ? 12 : 8,
+                    child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -97,7 +132,7 @@ class TableGrid extends StatelessWidget {
                       ),
                       child: Icon(
                         isOccupied ? Icons.close : Icons.check,
-                        size: 14,
+                        size: isTablet ? 16 : 14,
                         color: Colors.white,
                       ),
                     ),

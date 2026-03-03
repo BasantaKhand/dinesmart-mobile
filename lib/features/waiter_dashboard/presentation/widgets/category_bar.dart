@@ -26,15 +26,18 @@ class CategoryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = Colors.grey[50]!;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isTablet = screenWidth >= 600;
+    final double barHeight = isTablet ? 64 : 52;
 
     return SizedBox(
-      height: 52,
+      height: barHeight,
       child: Row(
         children: [
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: 16, right: 0),
+              padding: EdgeInsets.only(left: isTablet ? 20 : 16, right: 0),
               itemCount: categories.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
@@ -63,8 +66,8 @@ class CategoryBar extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 68,
-            height: 52,
+            width: isTablet ? 80 : 68,
+            height: barHeight,
             child: Stack(
               alignment: Alignment.centerRight,
               children: [

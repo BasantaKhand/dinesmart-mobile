@@ -40,9 +40,9 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
   void _initializeAccelerometerMonitoring() {
     _accelerometerService.startMonitoring(
       onShakeDetected: _handleShakeLogout,
-      threshold: 50.0,
+      threshold: 15.0, // ✅ Perfect for 90° rotation
     );
-    print('🔴 [ADMIN] Accelerometer monitoring enabled - rotate or shake device to logout');
+    print('🔴 [ADMIN] Accelerometer monitoring enabled - rotate device ~90° to logout');
   }
 
   /// Handle logout when shake is detected

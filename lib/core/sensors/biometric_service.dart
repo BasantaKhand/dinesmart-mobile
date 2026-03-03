@@ -3,22 +3,22 @@ import 'package:local_auth/local_auth.dart';
 class BiometricService {
   static final BiometricService _instance = BiometricService._internal();
 
-  late LocalAuthentication _localAuth;
+  final LocalAuthentication _localAuth = LocalAuthentication();
   bool _isBiometricAvailable = false;
+  bool _isInitialized = false;
   List<BiometricType> _availableBiometrics = [];
 
-  BiometricService._internal() {
-    _localAuth = LocalAuthentication();
-    _initBiometric();
-  }
+  BiometricService._internal();
 
-  factory BiometricService() {
-    return _instance;
-  }
+  factory BiometricService() => _instance;
 
-  Future<void> _initBiometric() async {
+  /// Must be awaited before checking [isBiometricAvailable].
+  /// Safe to call multiple times — only runs once.
+  Future<void> init() async {
+    if (_isInitialized) return;
     try {
-      _isBiometricAvailable = await _localAuth.canCheckBiometrics;
+      _isBiometricAvailable = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
       if (_isBiometricAvailable) {
         _availableBiometrics = await _localAuth.getAvailableBiometrics();
         print('✅ Biometrics available: $_availableBiometrics');
@@ -27,49 +27,42 @@ class BiometricService {
       }
     } catch (e) {
       print('❌ Error checking biometrics: $e');
+      _isBiometricAvailable = false;
+    } finally {
+      _isInitialized = true;
     }
   }
 
-  /// Check if biometric is available
+  /// Whether biometrics are available. Call [init] first.
   bool get isBiometricAvailable => _isBiometricAvailable;
 
-  /// Get list of available biometric types
+  /// List of available biometric types.
   List<BiometricType> get availableBiometrics => _availableBiometrics;
 
-  /// Authenticate using biometric (fingerprint/face)
-  Future<bool> authenticate({
-    required String reason,
-  }) async {
+  /// Authenticate using biometric (fingerprint / face).
+  Future<bool> authenticate({required String reason}) async {
+    if (!_isBiometricAvailable) {
+      print('❌ Biometric not available');
+      return false;
+    }
     try {
-      if (!_isBiometricAvailable) {
-        print('❌ Biometric not available');
-        return false;
-      }
-
-      final isAuthenticated = await _localAuth.authenticate(
+      final result = await _localAuth.authenticate(
         localizedReason: reason,
         options: const AuthenticationOptions(
           useErrorDialogs: true,
+          stickyAuth: true,
         ),
       );
-
-      if (isAuthenticated) {
-        print('✅ Biometric authentication successful');
-        return true;
-      } else {
-        print('❌ Biometric authentication failed or cancelled');
-        return false;
-      }
+      print(result ? '✅ Biometric auth succeeded' : '❌ Biometric auth failed/cancelled');
+      return result;
     } catch (e) {
       print('❌ Biometric error: $e');
       return false;
     }
   }
 
-  /// Get biometric type string for display
+  /// Human-readable name of the primary biometric type.
   String getBiometricTypeString() {
-    if (_availableBiometrics.isEmpty) return 'Biometric';
-    
     if (_availableBiometrics.contains(BiometricType.fingerprint)) {
       return 'Fingerprint';
     } else if (_availableBiometrics.contains(BiometricType.face)) {
@@ -78,5 +71,13 @@ class BiometricService {
       return 'Iris Scan';
     }
     return 'Biometric';
+  }
+
+  /// Icon to use in UI for the available biometric type.
+  String getBiometricIconAsset() {
+    if (_availableBiometrics.contains(BiometricType.face)) {
+      return 'assets/icons/face_id.png';
+    }
+    return 'assets/icons/fingerprint.png';
   }
 }

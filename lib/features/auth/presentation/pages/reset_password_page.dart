@@ -42,9 +42,12 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   }
 
   Future<void> _checkBiometricAvailability() async {
-    setState(() {
-      _isBiometricAvailable = _biometricService.isBiometricAvailable;
-    });
+    await _biometricService.init();
+    if (mounted) {
+      setState(() {
+        _isBiometricAvailable = _biometricService.isBiometricAvailable;
+      });
+    }
   }
 
   void _navigateToLogin() {

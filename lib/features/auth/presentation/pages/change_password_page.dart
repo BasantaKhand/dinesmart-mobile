@@ -1,5 +1,6 @@
 import 'package:dinesmart_app/app/routes/app_routes.dart';
 import 'package:dinesmart_app/app/theme/app_colors.dart';
+import 'package:dinesmart_app/core/sensors/biometric_service.dart';
 import 'package:dinesmart_app/core/utils/snackbar_utils.dart';
 import 'package:dinesmart_app/core/widgets/button_widget.dart';
 import 'package:dinesmart_app/features/auth/presentation/state/auth_state.dart';
@@ -27,6 +28,67 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
+  // ── Biometrics ──────────────────────────────────────────────────────────────
+  final _biometricService = BiometricService();
+  bool _isBiometricAvailable = false;
+  bool _biometricVerified = false;
+  bool _isAuthenticating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initBiometrics();
+  }
+
+  Future<void> _initBiometrics() async {
+    await _biometricService.init();
+    if (mounted) {
+      setState(() {
+        _isBiometricAvailable = _biometricService.isBiometricAvailable;
+      });
+      // Auto-prompt fingerprint when the page opens if available
+      if (_isBiometricAvailable) {
+        await _authenticateWithBiometric();
+      }
+    }
+  }
+
+  Future<void> _authenticateWithBiometric() async {
+    if (_isAuthenticating) return;
+    setState(() => _isAuthenticating = true);
+    try {
+      final success = await _biometricService.authenticate(
+        reason: 'Verify your ${_biometricService.getBiometricTypeString()} to change your password',
+      );
+      if (mounted) {
+        setState(() => _biometricVerified = success);
+        if (!success) {
+          SnackbarUtils.showError(
+            context,
+            '${_biometricService.getBiometricTypeString()} not recognised. Tap the box to try again.',
+          );
+        }
+      }
+    } catch (e) {
+      // Handle specific biometric errors
+      String message = 'Biometric error. Tap to try again.';
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('notenrolled') || errStr.contains('not_enrolled')) {
+        message = 'No fingerprint enrolled on this device. Go to device Settings → Security → Fingerprint.';
+      } else if (errStr.contains('locked') || errStr.contains('lockout')) {
+        message = 'Too many attempts. Fingerprint temporarily locked. Try again in 30 seconds.';
+      } else if (errStr.contains('passcode') || errStr.contains('no_device_credential')) {
+        message = 'No screen lock set up. Enable fingerprint in device Settings.';
+      }
+      if (mounted) {
+        setState(() => _biometricVerified = false);
+        SnackbarUtils.showError(context, message);
+      }
+    } finally {
+      if (mounted) setState(() => _isAuthenticating = false);
+    }
+  }
+
   @override
   void dispose() {
     _currentPasswordController.dispose();
@@ -36,15 +98,23 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   }
 
   Future<void> _handleChangePassword() async {
-    if (_formKey.currentState!.validate()) {
-      await ref
-          .read(authViewModelProvider.notifier)
-          .changePassword(
-            currentPassword: _currentPasswordController.text,
-            newPassword: _newPasswordController.text,
-          );
+    if (!_formKey.currentState!.validate()) return;
+
+    // If fingerprint is available but not yet verified, prompt first
+    if (_isBiometricAvailable && !_biometricVerified) {
+      await _authenticateWithBiometric();
+      if (!_biometricVerified) return; // still not verified — stop
     }
+
+    await ref
+        .read(authViewModelProvider.notifier)
+        .changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+        );
   }
+
+  // ── Styles ───────────────────────────────────────────────────────────────────
 
   TextStyle get _titleStyle => const TextStyle(
     fontSize: 28,
@@ -108,6 +178,107 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
     child: Text(text, style: _labelStyle),
   );
 
+  // ── Biometric Badge ──────────────────────────────────────────────────────────
+
+  Widget _buildBiometricBadge() {
+    if (!_isBiometricAvailable) return const SizedBox.shrink();
+
+    final verified = _biometricVerified;
+    final label = _biometricService.getBiometricTypeString();
+
+    return GestureDetector(
+      onTap: verified ? null : _authenticateWithBiometric,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.only(bottom: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: verified
+              ? Colors.green.withAlpha(20)
+              : AppColors.primary.withAlpha(12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: verified
+                ? Colors.green.withAlpha(80)
+                : AppColors.primary.withAlpha(60),
+            width: 1.4,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Icon circle
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: verified
+                    ? Colors.green.withAlpha(30)
+                    : AppColors.primary.withAlpha(20),
+              ),
+              child: _isAuthenticating
+                  ? Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                      ),
+                    )
+                  : Icon(
+                      verified
+                          ? Icons.check_circle_rounded
+                          : Icons.fingerprint_rounded,
+                      color: verified ? Colors.green : AppColors.primary,
+                      size: 24,
+                    ),
+            ),
+            const SizedBox(width: 14),
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    verified
+                        ? '$label Verified'
+                        : 'Verify with $label',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: verified ? Colors.green.shade700 : AppColors.blackText,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    verified
+                        ? 'Identity confirmed. You can now update your password.'
+                        : 'Tap to authenticate before changing password.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: verified
+                          ? Colors.green.shade600
+                          : AppColors.blackText.withAlpha(130),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!verified && !_isAuthenticating)
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.primary.withAlpha(180),
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
@@ -129,6 +300,10 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
 
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.status == AuthStatus.loading;
+
+    // Determine if submit should be enabled
+    final canSubmit = !isLoading &&
+        (!_isBiometricAvailable || _biometricVerified);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -165,7 +340,12 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 'Update your password to keep your account secure.',
                 style: _subtitleStyle,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
+
+              // ── Fingerprint badge ──
+              _buildBiometricBadge(),
+
+              // ── Form ──
               Form(
                 key: _formKey,
                 child: Column(
@@ -250,10 +430,16 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                     ),
                     const SizedBox(height: 40),
                     CustomButton(
-                      text: isLoading ? 'Updating...' : 'Update Password',
-                      onPressed: isLoading ? null : _handleChangePassword,
+                      text: isLoading
+                          ? 'Updating...'
+                          : (_isBiometricAvailable && !_biometricVerified)
+                              ? 'Verify ${_biometricService.getBiometricTypeString()} first'
+                              : 'Update Password',
+                      onPressed: canSubmit ? _handleChangePassword : null,
                       isLoading: isLoading,
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: (_isBiometricAvailable && !_biometricVerified)
+                          ? Colors.grey.shade400
+                          : AppColors.primary,
                     ),
                   ],
                 ),

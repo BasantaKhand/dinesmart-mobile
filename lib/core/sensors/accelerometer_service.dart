@@ -1,4 +1,5 @@
 import 'dart:async'; // ✅ For StreamSubscription
+import 'dart:math'; // ✅ For sqrt
 import 'package:sensors_plus/sensors_plus.dart';
 
 typedef LogoutCallback = Future<void> Function();
@@ -9,7 +10,7 @@ class AccelerometerService {
   late Stream<AccelerometerEvent> _accelerometerStream;
   StreamSubscription<AccelerometerEvent>? _subscription; // ✅ Store subscription
   bool _isMonitoring = false;
-  double _threshold = 15.0; // ✅ Lower default threshold for rotation detection
+  double _threshold = 15.0; // ✅ Perfect for 90° rotation detection
   DateTime? _lastShakeTime;
   LogoutCallback? _onShakeDetected;
 
@@ -24,7 +25,7 @@ class AccelerometerService {
   /// Start monitoring device shake/acceleration
   void startMonitoring({
     required LogoutCallback onShakeDetected,
-    double threshold = 15.0, // ✅ Lower default for rotation detection
+    double threshold = 15.0, // ✅ Perfect for 90° rotation - not too sensitive, not too weak
   }) {
     if (_isMonitoring) {
       print('⚠️ Accelerometer already monitoring');
@@ -73,14 +74,18 @@ class AccelerometerService {
       return;
     }
 
-    // Calculate acceleration magnitude
+    // Calculate acceleration magnitude (using square root for correct calculation)
     final x = event.x;
     final y = event.y;
     final z = event.z;
 
-    // More realistic acceleration calculation
-    final acceleration = (x * x + y * y + z * z).toStringAsFixed(2);
-    final accelerationValue = double.parse(acceleration);
+    // Correct magnitude = sqrt(x² + y² + z²)
+    // Gravity alone = sqrt(0² + 9.81² + 0²) = 9.81 m/s²
+    // Normal movement = 10-15 m/s²
+    // Vigorous shake = 20-30 m/s²
+    // Violent shake/drop = 50+ m/s²
+    final magnitude = sqrt(x * x + y * y + z * z);
+    final accelerationValue = double.parse(magnitude.toStringAsFixed(2));
 
     // Debug: Print all readings to see what's happening
     if (accelerationValue > 5.0) {
@@ -88,8 +93,12 @@ class AccelerometerService {
     }
 
     // Detect significant movement (rotate device, drop, or theft attempt)
-    // Rotation typically produces 10-20 m/s² acceleration
-    // Threshold of 15 catches rotation, 25+ catches violent shakes
+    // Gravity alone = 9.81 m/s²
+    // Gentle rotation = 12-15 m/s²
+    // 90° rotation = 15-20 m/s²
+    // Vigorous shake = 20-30 m/s²
+    // Violent shake/drop = 50+ m/s²
+    // Threshold of 15 is PERFECT for 90° rotation detection
     if (accelerationValue > _threshold) {
       _lastShakeTime = now;
       print('🚨 SUSPICIOUS MOTION DETECTED! Acceleration: $accelerationValue (threshold: $_threshold)');

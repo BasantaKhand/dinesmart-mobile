@@ -1,5 +1,6 @@
 import 'package:mocktail/mocktail.dart';
 import 'package:dinesmart_app/core/services/connectivity/network_info.dart';
+import 'package:dinesmart_app/core/api/api_client.dart';
 import 'package:dinesmart_app/features/cashier_dashboard/domain/repository/cashier_dashboard_repository.dart';
 import 'package:dinesmart_app/features/cashier_dashboard/domain/use_cases/cashier_usecases.dart';
 import 'package:dinesmart_app/features/cashier_dashboard/domain/entities/cashier_entities.dart';
@@ -9,10 +10,19 @@ import 'package:dinesmart_app/features/staff_management/domain/repository/staff_
 import 'package:dinesmart_app/features/staff_management/domain/entities/staff_entity.dart';
 import 'package:dinesmart_app/features/staff_management/data/data_sources/staff_remote_data_source.dart';
 import 'package:dinesmart_app/features/staff_management/data/data_sources/staff_local_data_source.dart';
+import 'package:dinesmart_app/features/auth/domain/usecases/login_usecase.dart';
+import 'package:dinesmart_app/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:dinesmart_app/features/auth/domain/usecases/send_request_usecase.dart';
+import 'package:dinesmart_app/features/auth/domain/usecases/update_password_usecase.dart';
+import 'package:dinesmart_app/features/auth/domain/usecases/update_profile_usecase.dart';
+import 'package:dinesmart_app/features/auth/domain/entities/auth_entity.dart';
+import 'package:dinesmart_app/core/services/storage/user_session_service.dart';
 
 // ─── Mock Classes ───
 
 class MockCashierDashboardRepository extends Mock implements ICashierDashboardRepository {}
+
+class MockApiClient extends Mock implements ApiClient {}
 
 class MockStaffRepository extends Mock implements IStaffRepository {}
 
@@ -39,6 +49,20 @@ class MockSettlePaymentUseCase extends Mock implements SettlePaymentUseCase {}
 class MockOpenCashDrawerUseCase extends Mock implements OpenCashDrawerUseCase {}
 
 class MockCloseCashDrawerUseCase extends Mock implements CloseCashDrawerUseCase {}
+
+// ─── Auth Mocks ───
+
+class MockLoginUsecase extends Mock implements LoginUsecase {}
+
+class MockLogoutUsecase extends Mock implements LogoutUsecase {}
+
+class MockSendRequestUsecase extends Mock implements SendRequestUsecase {}
+
+class MockUpdatePasswordUsecase extends Mock implements UpdatePasswordUsecase {}
+
+class MockUpdateProfileUsecase extends Mock implements UpdateProfileUsecase {}
+
+class MockUserSessionService extends Mock implements UserSessionService {}
 
 // ─── Fake Classes (for registerFallbackValue) ───
 
@@ -156,4 +180,28 @@ class TestData {
         staffEntity(id: 'staff_2', name: 'Jane Smith', email: 'jane@restaurant.com', role: StaffRole.cashier),
         staffEntity(id: 'staff_3', name: 'Bob Wilson', email: 'bob@restaurant.com', role: StaffRole.waiter, status: StaffStatus.inactive),
       ];
+
+  // ─── Auth ───
+
+  static AuthEntity authEntity({
+    String authId = 'user_1',
+    String ownerName = 'Admin User',
+    String email = 'admin@dinesmart.com',
+    String role = 'admin',
+    bool mustChangePassword = false,
+  }) {
+    return AuthEntity(
+      authId: authId,
+      restaurantName: 'DineSmart Test',
+      ownerName: ownerName,
+      email: email,
+      phoneNumber: '9800000000',
+      address: 'Test Address',
+      message: 'Test Message',
+      username: 'admin_user',
+      role: role,
+      restaurantId: 'rest_1',
+      mustChangePassword: mustChangePassword,
+    );
+  }
 }

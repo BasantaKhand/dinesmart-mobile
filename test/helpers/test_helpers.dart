@@ -10,6 +10,10 @@ import 'package:dinesmart_app/features/staff_management/domain/repository/staff_
 import 'package:dinesmart_app/features/staff_management/domain/entities/staff_entity.dart';
 import 'package:dinesmart_app/features/staff_management/data/data_sources/staff_remote_data_source.dart';
 import 'package:dinesmart_app/features/staff_management/data/data_sources/staff_local_data_source.dart';
+import 'package:dinesmart_app/features/waiter_dashboard/domain/entities/table_entity.dart';
+import 'package:dinesmart_app/features/waiter_dashboard/domain/entities/category_entity.dart';
+import 'package:dinesmart_app/features/waiter_dashboard/domain/entities/menu_item_entity.dart';
+import 'package:dinesmart_app/features/waiter_dashboard/domain/entities/order_entity.dart';
 import 'package:dinesmart_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:dinesmart_app/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:dinesmart_app/features/auth/domain/usecases/send_request_usecase.dart';
@@ -202,6 +206,82 @@ class TestData {
       role: role,
       restaurantId: 'rest_1',
       mustChangePassword: mustChangePassword,
+    );
+  }
+
+  // ─── Waiter Dashboard ───
+
+  static TableEntity tableEntity({
+    String id = 't1',
+    String number = '1',
+    TableStatus status = TableStatus.available,
+  }) {
+    return TableEntity(
+      id: id,
+      number: number,
+      status: status,
+      capacity: 4,
+    );
+  }
+
+  static CategoryEntity categoryEntity({
+    String id = 'c1',
+    String name = 'Appetizers',
+  }) {
+    return CategoryEntity(
+      id: id,
+      name: name,
+      image: 'appetizers.png',
+    );
+  }
+
+  static MenuItemEntity menuItemEntity({
+    String id = 'm1',
+    String name = 'Momo',
+    double price = 150,
+  }) {
+    return MenuItemEntity(
+      id: id,
+      name: name,
+      price: price,
+      image: 'momo.png',
+      description: 'Test description',
+      categoryId: 'c1',
+    );
+  }
+
+  static OrderItemEntity orderItemEntity({
+    String menuItemId = 'm1',
+    String name = 'Momo',
+    double price = 150,
+    int quantity = 2,
+  }) {
+    return OrderItemEntity(
+      menuItemId: menuItemId,
+      name: name,
+      price: price,
+      quantity: quantity,
+      total: price * quantity,
+      imageUrl: 'momo.png',
+    );
+  }
+
+  static OrderEntity orderEntity({
+    String id = 'ord_123456',
+    OrderStatus status = OrderStatus.pending,
+    List<OrderItemEntity> items = const [],
+  }) {
+    final subtotal = items.fold(0.0, (acc, item) => acc + item.total);
+    final tax = subtotal * 0.13;
+    return OrderEntity(
+      id: id,
+      tableId: 't1',
+      items: items,
+      status: status,
+      subtotal: subtotal,
+      tax: tax,
+      total: subtotal + tax,
+      createdAt: DateTime(2026, 3, 2, 12, 0),
     );
   }
 }

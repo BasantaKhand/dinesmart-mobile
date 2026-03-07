@@ -101,6 +101,7 @@ class _WaiterDashboardPageState extends ConsumerState<WaiterDashboardPage> {
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ],

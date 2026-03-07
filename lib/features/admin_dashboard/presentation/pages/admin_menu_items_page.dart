@@ -875,7 +875,7 @@ class _AdminMenuItemsPageState extends ConsumerState<AdminMenuItemsPage> {
     return DropdownButtonFormField<String>(
       initialValue: selectedId,
       decoration: InputDecoration(
-        hintText: 'Select category',
+        hintText: 'Select categry',
         hintStyle: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,

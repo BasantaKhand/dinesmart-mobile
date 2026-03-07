@@ -116,12 +116,13 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
               errorBuilder: (c, e, s) =>
                   const Icon(Icons.restaurant, color: Colors.orange),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 10),
             const Text(
               'DineSmart',
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ],
@@ -195,8 +196,8 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
             label: 'Tables',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Settings',
+            icon: Icon(Icons.group_outlined),
+            label: 'Staff',
           ),
         ],
       ),

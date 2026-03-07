@@ -99,37 +99,33 @@ class _CashierDashboardPageState extends ConsumerState<CashierDashboardPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
+            Image.asset(
+              'assets/logos/logo.png',
+              height: 32,
+              errorBuilder: (c, e, s) => Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.restaurant, color: Colors.white, size: 20),
+              ),
+            ),
+            const SizedBox(width: 10),
             const Text(
               'DineSmart',
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ],
         ),
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset(
-            'assets/logos/logo.png',
-            height: 32,
-            errorBuilder: (c, e, s) => Container(
-              decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.restaurant, color: Colors.white, size: 20),
-            ),
-          ),
-        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black54),
-            onPressed: () => ref.read(cashierDashboardViewModelProvider.notifier).refresh(),
-          ),
+         
           const NotificationBadge(),
           const UserProfileDropDown(),
           const SizedBox(width: 8),

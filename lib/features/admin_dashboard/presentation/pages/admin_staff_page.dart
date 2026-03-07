@@ -1157,7 +1157,7 @@ class _AddEditStaffSheetState extends ConsumerState<AddEditStaffSheet> {
                         elevation: 0,
                       ),
                       child: Text(
-                        widget.staff == null ? 'Create Record' : 'Save Changes',
+                        widget.staff == null ? 'Create Staff' : 'Save Changes',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,

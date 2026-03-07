@@ -42,12 +42,10 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       onShakeDetected: _handleShakeLogout,
       threshold: 15.0, // ✅ Perfect for 90° rotation
     );
-    // print('🔴 [ADMIN] Accelerometer monitoring enabled - rotate device ~90° to logout');
   }
 
   /// Handle logout when shake is detected
   Future<void> _handleShakeLogout() async {
-    // print('🚨 [ADMIN] SHAKE DETECTED - Device motion detected!');
     
     if (!mounted) return;
     
@@ -65,7 +63,6 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              print('✅ [ADMIN] User cancelled logout - resumed session');
             },
             child: const Text('Cancel', style: TextStyle(color: Colors.blue, fontSize: 16)),
           ),

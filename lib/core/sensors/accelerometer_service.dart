@@ -28,7 +28,6 @@ class AccelerometerService {
     double threshold = 15.0, // ✅ Perfect for 90° rotation - not too sensitive, not too weak
   }) {
     if (_isMonitoring) {
-      print('⚠️ Accelerometer already monitoring');
       return;
     }
 
@@ -36,20 +35,15 @@ class AccelerometerService {
     _threshold = threshold;
     _isMonitoring = true;
 
-    print('✅ Accelerometer monitoring started (threshold: $_threshold)');
-    print('📱 Rotating device should trigger logout alert...');
-
     // ✅ Store subscription to keep it alive
     _subscription = _accelerometerStream.listen(
       (AccelerometerEvent event) {
         _detectShake(event);
       },
       onError: (error) {
-        print('❌ Accelerometer error: $error');
         _isMonitoring = false;
       },
       onDone: () {
-        print('⛔ Accelerometer stream closed');
         _isMonitoring = false;
       },
     );
@@ -59,7 +53,6 @@ class AccelerometerService {
   void stopMonitoring() {
     _subscription?.cancel(); // ✅ Properly cancel subscription
     _isMonitoring = false;
-    print('⛔ Accelerometer monitoring stopped');
   }
 
   /// Detect shake/unusual movement
@@ -89,7 +82,6 @@ class AccelerometerService {
 
     // Debug: Print all readings to see what's happening
     if (accelerationValue > 5.0) {
-      print('📊 Device motion detected: X=$x, Y=$y, Z=$z, Magnitude=$accelerationValue (threshold: $_threshold)');
     }
 
     // Detect significant movement (rotate device, drop, or theft attempt)
@@ -101,7 +93,6 @@ class AccelerometerService {
     // Threshold of 15 is PERFECT for 90° rotation detection
     if (accelerationValue > _threshold) {
       _lastShakeTime = now;
-      print('🚨 SUSPICIOUS MOTION DETECTED! Acceleration: $accelerationValue (threshold: $_threshold)');
       _triggerLogout();
     }
   }
@@ -109,7 +100,6 @@ class AccelerometerService {
   /// Trigger logout when shake is detected
   Future<void> _triggerLogout() async {
     if (_onShakeDetected != null) {
-      print('🔐 Executing logout due to suspicious shake detected');
       await _onShakeDetected!();
     }
   }
@@ -123,6 +113,5 @@ class AccelerometerService {
   /// Set custom threshold
   void setThreshold(double newThreshold) {
     _threshold = newThreshold;
-    print('🔧 Accelerometer threshold updated to: $_threshold');
   }
 }

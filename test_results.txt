@@ -1,0 +1,14 @@
+00:00 +0: loading /Users/krishna613460gmail.com/Basant Project/dinesmart-mobile/test/widget/login_page_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: LoginPage Widget Test renders all UI elements
+00:00 +1: LoginPage Widget Test shows validation errors for empty fields
+00:00 +2: LoginPage Widget Test shows validation error for invalid email
+00:00 +3: LoginPage Widget Test toggles password visibility
+00:00 +4: LoginPage Widget Test calls login on ViewModel when form is valid
+✅ Accelerometer monitoring started (threshold: 15.0)
+📱 Rotating device should trigger logout alert...
+🔴 Accelerometer monitoring enabled - rotate or shake device to logout
+⛔ Accelerometer monitoring stopped
+00:01 +5: LoginPage Widget Test displays error snackbar on login failure
+00:01 +6: (tearDownAll)
+00:01 +6: All tests passed!

@@ -42,12 +42,12 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       onShakeDetected: _handleShakeLogout,
       threshold: 15.0, // ✅ Perfect for 90° rotation
     );
-    print('🔴 [ADMIN] Accelerometer monitoring enabled - rotate device ~90° to logout');
+    // print('🔴 [ADMIN] Accelerometer monitoring enabled - rotate device ~90° to logout');
   }
 
   /// Handle logout when shake is detected
   Future<void> _handleShakeLogout() async {
-    print('🚨 [ADMIN] SHAKE DETECTED - Device motion detected!');
+    // print('🚨 [ADMIN] SHAKE DETECTED - Device motion detected!');
     
     if (!mounted) return;
     
@@ -109,6 +109,7 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.black),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
               'assets/logos/logo.png',
@@ -117,12 +118,15 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                   const Icon(Icons.restaurant, color: Colors.orange),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'DineSmart',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            const Flexible(
+              child: Text(
+                'DineSmart',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

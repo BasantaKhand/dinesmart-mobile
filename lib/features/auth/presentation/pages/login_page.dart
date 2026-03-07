@@ -244,16 +244,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Remember me',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.blackText.withAlpha(160),
+                            Expanded(
+                              child: Text(
+                                'Remember me',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.blackText.withAlpha(160),
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 4),
                             TextButton(
                               onPressed: _navigateToForgotPassword,
                               style: TextButton.styleFrom(

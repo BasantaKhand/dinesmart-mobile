@@ -73,7 +73,9 @@ void main() {
     testWidgets('shows validation errors for empty fields', (tester) async {
       await tester.pumpWidget(createLoginPage());
 
-      await tester.tap(find.text('Login to DineSmart →'));
+      final loginButton = find.text('Login to DineSmart →');
+      await tester.ensureVisible(loginButton);
+      await tester.tap(loginButton);
       await tester.pump();
 
       expect(find.text('Please enter your email.'), findsOneWidget);
@@ -84,7 +86,10 @@ void main() {
       await tester.pumpWidget(createLoginPage());
 
       await tester.enterText(find.byType(TextField).first, 'invalid-email');
-      await tester.tap(find.text('Login to DineSmart →'));
+      
+      final loginButton = find.text('Login to DineSmart →');
+      await tester.ensureVisible(loginButton);
+      await tester.tap(loginButton);
       await tester.pump();
 
       expect(find.text('Enter a valid email.'), findsOneWidget);
@@ -94,17 +99,18 @@ void main() {
       await tester.pumpWidget(createLoginPage());
 
       final passwordField = find.byType(TextFormField).last;
-      expect(tester.widget<TextFormField>(passwordField).obscureText, true);
+      await tester.ensureVisible(passwordField);
+      expect(tester.widget<TextField>(find.descendant(of: passwordField, matching: find.byType(TextField))).obscureText, true);
 
       await tester.tap(find.byIcon(Icons.visibility_off_rounded));
       await tester.pump();
 
-      expect(tester.widget<TextFormField>(passwordField).obscureText, false);
+      expect(tester.widget<TextField>(find.descendant(of: passwordField, matching: find.byType(TextField))).obscureText, false);
 
       await tester.tap(find.byIcon(Icons.visibility_rounded));
       await tester.pump();
 
-      expect(tester.widget<TextFormField>(passwordField).obscureText, true);
+      expect(tester.widget<TextField>(find.descendant(of: passwordField, matching: find.byType(TextField))).obscureText, true);
     });
 
     testWidgets('calls login on ViewModel when form is valid', (tester) async {
@@ -117,7 +123,9 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'test@example.com');
       await tester.enterText(find.byType(TextField).last, 'password123');
       
-      await tester.tap(find.text('Login to DineSmart →'));
+      final loginButton = find.text('Login to DineSmart →');
+      await tester.ensureVisible(loginButton);
+      await tester.tap(loginButton);
       await tester.pump();
 
       verify(() => mockLoginUsecase(any())).called(1);
@@ -134,7 +142,9 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'test@example.com');
       await tester.enterText(find.byType(TextField).last, 'password123');
       
-      await tester.tap(find.text('Login to DineSmart →'));
+      final loginButton = find.text('Login to DineSmart →');
+      await tester.ensureVisible(loginButton);
+      await tester.tap(loginButton);
       await tester.pump(const Duration(milliseconds: 100)); // Allow for state change
       await tester.pump(); // Allow for snackbar to show
 

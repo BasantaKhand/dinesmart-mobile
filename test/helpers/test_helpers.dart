@@ -224,6 +224,12 @@ class TestData {
     );
   }
 
+  static List<TableEntity> tableList() => [
+        tableEntity(id: 't1', number: '1'),
+        tableEntity(id: 't2', number: '2', status: TableStatus.occupied),
+        tableEntity(id: 't3', number: '3'),
+      ];
+
   static CategoryEntity categoryEntity({
     String id = 'c1',
     String name = 'Appetizers',

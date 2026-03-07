@@ -873,9 +873,11 @@ class _AdminMenuItemsPageState extends ConsumerState<AdminMenuItemsPage> {
   ) {
     final state = ref.watch(waiterDashboardViewModelProvider);
     return DropdownButtonFormField<String>(
+      isExpanded: true,
+      isDense: true,
       initialValue: selectedId,
       decoration: InputDecoration(
-        hintText: 'Select categry',
+        hintText: 'Select Category',
         hintStyle: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -896,11 +898,23 @@ class _AdminMenuItemsPageState extends ConsumerState<AdminMenuItemsPage> {
           borderSide: const BorderSide(color: _brand, width: 1.4),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
+          horizontal: 12,
           vertical: 12,
         ),
       ),
       icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey[600]),
+      selectedItemBuilder: (context) {
+        return state.categories.map((c) {
+          return Text(
+            c.name,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+            overflow: TextOverflow.ellipsis,
+          );
+        }).toList();
+      },
       items: state.categories
           .map(
             (c) => DropdownMenuItem(
@@ -911,6 +925,7 @@ class _AdminMenuItemsPageState extends ConsumerState<AdminMenuItemsPage> {
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           )
